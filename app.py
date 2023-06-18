@@ -1,26 +1,61 @@
 import pygame as pg
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileShader, compileProgram
-import OpenGL.GLUT as glut
+# import OpenGL.GLUT as glut
 import numpy as np
+import pyrr
+
+
+class Cube:
+
+    def __init__(self, position, rotations):
+        self.position = np.array(position, dtype=np.float32)
+        self.rotations = np.array(rotations, dtype=np.float32)
 
 
 class App:
 
     def __init__(self):
 
+        self.WIDTH = 900
+        self.HEIGHT = 600
+
         pg.init()
         pg.display.gl_set_attribute(pg.GL_CONTEXT_MAJOR_VERSION, 3)
         pg.display.gl_set_attribute(pg.GL_CONTEXT_MINOR_VERSION, 3)
         pg.display.gl_set_attribute(pg.GL_CONTEXT_PROFILE_MASK, pg.GL_CONTEXT_PROFILE_CORE)
-        pg.display.set_mode((900, 500), pg.OPENGL | pg.DOUBLEBUF)
+        pg.display.set_mode((self.WIDTH, self.HEIGHT), pg.OPENGL | pg.DOUBLEBUF)
 
         self.clock = pg.time.Clock()
 
         glClearColor(0.1, 0.1, 0.1, 1.0)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-        self.triangle = Triangle()
+        self.cube = Cube(
+            position=[0, 0, -3],
+            rotations=[0, 0, 0]
+        )
+
+        self.cube_mesh = CubeMesh()
+
         self.shader = self.create_shader("shaders/vertex.glsl", "shaders/fragment.glsl")
+        glUseProgram(self.shader)
+
+        glUniform1i(glGetUniformLocation(self.shader, "imageTexture"), 0)
+        self.texture = Material("textures/leet.png")
+
+        projection = pyrr.matrix44.create_perspective_projection(
+            fovy=45, aspect=self.WIDTH / self.HEIGHT,
+            near=0.1, far=10, dtype=np.float32
+        )
+
+        glUniformMatrix4fv(
+            glGetUniformLocation(self.shader, "projection"),
+            1, GL_FALSE, projection
+        )
+
+        self.modelMatrixLocation = glGetUniformLocation(self.shader, "model")
 
         self.run()
 
@@ -52,8 +87,30 @@ class App:
             glClear(GL_COLOR_BUFFER_BIT)
 
             glUseProgram(self.shader)
-            glBindVertexArray(self.triangle.vao)
-            glDrawArrays(GL_TRIANGLES, 0, self.triangle.vertex_count)
+
+            # Update cube
+
+            self.cube.rotations[2] += 0.05
+
+            model = pyrr.matrix44.create_identity(dtype=np.float32)
+            model = pyrr.matrix44.multiply(
+                m1=model,
+                m2=pyrr.matrix44.create_from_eulers(
+                    eulers=np.array(self.cube.rotations),
+                    dtype=np.float32
+                )
+            )
+            model = pyrr.matrix44.multiply(
+                m1=model,
+                m2=pyrr.matrix44.create_from_translation(
+                    vec=np.array(self.cube.position),
+                    dtype=np.float32
+                )
+            )
+            glUniformMatrix4fv(self.modelMatrixLocation, 1, GL_FALSE, model)
+            self.texture.use()
+            glBindVertexArray(self.cube_mesh.vao)
+            glDrawArrays(GL_TRIANGLES, 0, self.cube_mesh.vertex_count)
 
             pg.display.flip()
 
@@ -63,37 +120,103 @@ class App:
         self.quit()
 
     def quit(self):
-        self.triangle.destroy()
+        self.cube_mesh.destroy()
+        self.texture.destroy()
         glDeleteProgram(self.shader)
         pg.quit()
 
 
-class Triangle:
-    # X Y Z R G B
+class CubeMesh:
     def __init__(self):
         self.vertices = (
-            -0.5, -0.5, 0.0, 1.0, 0.0, 0.0,
-            0.5, -0.5, 0.0, 0.0, 1.0, 0.0,
-            0.0, 0.5, 0.0, 0.0, 0.0, 1.0,
+            # positions - normals - texture coordinates
+            # Back face
+            -0.5, -0.5, -0.5, 0.0, 0.0, -1.0, 0.0, 0.0,
+            0.5, 0.5, -0.5, 0.0, 0.0, -1.0, 1.0, 1.0,
+            0.5, -0.5, -0.5, 0.0, 0.0, -1.0, 1.0, 0.0,
+            0.5, 0.5, -0.5, 0.0, 0.0, -1.0, 1.0, 1.0,
+            -0.5, -0.5, -0.5, 0.0, 0.0, -1.0, 0.0, 0.0,
+            -0.5, 0.5, -0.5, 0.0, 0.0, -1.0, 0.0, 1.0,
+            # Front face
+            -0.5, -0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0,
+            0.5, -0.5, 0.5, 0.0, 0.0, 1.0, 1.0, 0.0,
+            0.5, 0.5, 0.5, 0.0, 0.0, 1.0, 1.0, 1.0,
+            0.5, 0.5, 0.5, 0.0, 0.0, 1.0, 1.0, 1.0,
+            -0.5, 0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 1.0,
+            -0.5, -0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0,
+            # Left face
+            -0.5, 0.5, 0.5, -1.0, 0.0, 0.0, 1.0, 0.0,
+            -0.5, 0.5, -0.5, -1.0, 0.0, 0.0, 1.0, 1.0,
+            -0.5, -0.5, -0.5, -1.0, 0.0, 0.0, 0.0, 1.0,
+            -0.5, -0.5, -0.5, -1.0, 0.0, 0.0, 0.0, 1.0,
+            -0.5, -0.5, 0.5, -1.0, 0.0, 0.0, 0.0, 0.0,
+            -0.5, 0.5, 0.5, -1.0, 0.0, 0.0, 1.0, 0.0,
+            # Right face
+            0.5, 0.5, 0.5, 1.0, 0.0, 0.0, 1.0, 0.0,
+            0.5, -0.5, -0.5, 1.0, 0.0, 0.0, 0.0, 1.0,
+            0.5, 0.5, -0.5, 1.0, 0.0, 0.0, 1.0, 1.0,
+            0.5, -0.5, -0.5, 1.0, 0.0, 0.0, 0.0, 1.0,
+            0.5, 0.5, 0.5, 1.0, 0.0, 0.0, 1.0, 0.0,
+            0.5, -0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0,
+            # Bottom face
+            -0.5, -0.5, -0.5, 0.0, -1.0, 0.0, 0.0, 1.0,
+            0.5, -0.5, -0.5, 0.0, -1.0, 0.0, 1.0, 1.0,
+            0.5, -0.5, 0.5, 0.0, -1.0, 0.0, 1.0, 0.0,
+            0.5, -0.5, 0.5, 0.0, -1.0, 0.0, 1.0, 0.0,
+            -0.5, -0.5, 0.5, 0.0, -1.0, 0.0, 0.0, 0.0,
+            -0.5, -0.5, -0.5, 0.0, -1.0, 0.0, 0.0, 1.0,
+            # Top face
+            -0.5, 0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 1.0,
+            0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 1.0, 0.0,
+            0.5, 0.5, -0.5, 0.0, 1.0, 0.0, 1.0, 1.0,
+            0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 1.0, 0.0,
+            -0.5, 0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 1.0,
+            -0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 0.0
         )
 
-        self.vertices = np.array(self.vertices, dtype=np.float32)
+        self.vertex_count = len(self.vertices) // 8
 
-        self.vertex_count = 3
+        self.vertices = np.array(self.vertices, dtype=np.float32)
 
         self.vao = glGenVertexArrays(1)
         glBindVertexArray(self.vao)
         self.vbo = glGenBuffers(1)
         glBindBuffer(GL_ARRAY_BUFFER, self.vbo)
         glBufferData(GL_ARRAY_BUFFER, self.vertices.nbytes, self.vertices, GL_STATIC_DRAW)
+        stride = (3 + 3 + 2) * 4
         glEnableVertexAttribArray(0)
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(0))
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, ctypes.c_void_p(0))
         glEnableVertexAttribArray(1)
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, ctypes.c_void_p(12))
+        glEnableVertexAttribArray(2)
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, ctypes.c_void_p(24))
 
     def destroy(self):
         glDeleteVertexArrays(1, (self.vao,))
         glDeleteBuffers(1, (self.vbo,))
+
+
+class Material:
+
+    def __init__(self, filepath):
+        self.texture = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, self.texture)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        image = pg.image.load(filepath).convert_alpha()
+        image_width, image_height = image.get_rect().size
+        image_data = pg.image.tostring(image, "RGBA")
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image_width, image_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data)
+        glGenerateMipmap(GL_TEXTURE_2D)
+
+    def use(self):
+        glActiveTexture(GL_TEXTURE0)
+        glBindTexture(GL_TEXTURE_2D, self.texture)
+
+    def destroy(self):
+        glDeleteTextures(1, (self.texture,))
 
 
 if __name__ == '__main__':

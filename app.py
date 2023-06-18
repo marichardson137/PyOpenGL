@@ -29,15 +29,20 @@ class App:
         self.clock = pg.time.Clock()
 
         glClearColor(0.1, 0.1, 0.1, 1.0)
+
         glEnable(GL_BLEND)
+        glEnable(GL_DEPTH_TEST)
+        # glEnable(GL_CULL_FACE)
+        # glCullFace(GL_BACK)
+        # glFrontFace(GL_CW)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         self.cube = Cube(
-            position=[0, 0, -3],
+            position=[0, 0, -10],
             rotations=[0, 0, 0]
         )
 
-        self.cube_mesh = CubeMesh()
+        self.cube_mesh = Mesh("models/monkey.obj")
 
         self.shader = self.create_shader("shaders/vertex.glsl", "shaders/fragment.glsl")
         glUseProgram(self.shader)
@@ -47,7 +52,7 @@ class App:
 
         projection = pyrr.matrix44.create_perspective_projection(
             fovy=45, aspect=self.WIDTH / self.HEIGHT,
-            near=0.1, far=10, dtype=np.float32
+            near=0.1, far=100, dtype=np.float32
         )
 
         glUniformMatrix4fv(
@@ -84,19 +89,19 @@ class App:
                     running = False
 
             # Refresh screen
-            glClear(GL_COLOR_BUFFER_BIT)
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
             glUseProgram(self.shader)
 
             # Update cube
 
-            self.cube.rotations[2] += 0.05
+            self.cube.rotations[2] += 0.5
 
             model = pyrr.matrix44.create_identity(dtype=np.float32)
             model = pyrr.matrix44.multiply(
                 m1=model,
                 m2=pyrr.matrix44.create_from_eulers(
-                    eulers=np.array(self.cube.rotations),
+                    eulers=np.radians(self.cube.rotations),
                     dtype=np.float32
                 )
             )
@@ -110,7 +115,7 @@ class App:
             glUniformMatrix4fv(self.modelMatrixLocation, 1, GL_FALSE, model)
             self.texture.use()
             glBindVertexArray(self.cube_mesh.vao)
-            glDrawArrays(GL_TRIANGLES, 0, self.cube_mesh.vertex_count)
+            glDrawArrays(GL_LINES, 0, self.cube_mesh.vertex_count)
 
             pg.display.flip()
 
@@ -129,7 +134,7 @@ class App:
 class CubeMesh:
     def __init__(self):
         self.vertices = (
-            # positions - normals - texture coordinates
+            # positions - normals - texture
             # Back face
             -0.5, -0.5, -0.5, 0.0, 0.0, -1.0, 0.0, 0.0,
             0.5, 0.5, -0.5, 0.0, 0.0, -1.0, 1.0, 1.0,
@@ -190,6 +195,70 @@ class CubeMesh:
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, ctypes.c_void_p(12))
         glEnableVertexAttribArray(2)
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, ctypes.c_void_p(24))
+
+    def destroy(self):
+        glDeleteVertexArrays(1, (self.vao,))
+        glDeleteBuffers(1, (self.vbo,))
+
+
+
+
+class Mesh:
+    def __init__(self, filename):
+        self.vertices = []
+        self.loadMesh(filename)
+        self.vertex_count = len(self.vertices) // 8
+        self.vertices = np.array(self.vertices, dtype=np.float32)
+
+        self.vao = glGenVertexArrays(1)
+        glBindVertexArray(self.vao)
+
+        # Vertices
+        self.vbo = glGenBuffers(1)
+        glBindBuffer(GL_ARRAY_BUFFER, self.vbo)
+        glBufferData(GL_ARRAY_BUFFER, self.vertices.nbytes, self.vertices, GL_STATIC_DRAW)
+        stride = (3 + 3 + 2) * 4
+        # Position
+        glEnableVertexAttribArray(0)
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, ctypes.c_void_p(0))
+        glEnableVertexAttribArray(1)
+        # Normal
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, ctypes.c_void_p(12))
+        # Texture
+        glEnableVertexAttribArray(2)
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, ctypes.c_void_p(24))
+
+    def loadMesh(self, filename):
+        v = []
+        vt = []
+        vn = []
+        with open(filename, "r") as file:
+            line = file.readline()
+            while line:
+                words = line.split(" ")
+                if words[0] == "v":
+                    v.append([float(words[1]), float(words[2]), float(words[3])])
+                elif words[0] == "vt":
+                    vt.append([float(words[1]), float(words[2])])
+                elif words[0] == "vn":
+                    vn.append([float(words[1]), float(words[2]), float(words[3])])
+                elif words[0] == "f":
+                    v1 = words[1].split("/")
+                    v2 = words[2].split("/")
+                    v3 = words[3].strip().split("/")
+                    self.process_vertex(v1, v, vt, vn)
+                    self.process_vertex(v2, v, vt, vn)
+                    self.process_vertex(v3, v, vt, vn)
+
+                line = file.readline()
+
+    def process_vertex(self, vertex_data, v, vt, vn):
+        vertex_ptr = int(vertex_data[0]) - 1
+        texture_ptr = int(vertex_data[1]) - 1
+        normal_ptr = int(vertex_data[2]) - 1
+        self.vertices = self.vertices + v[vertex_ptr]
+        self.vertices = self.vertices + vn[normal_ptr]
+        self.vertices = self.vertices + vt[texture_ptr]
 
     def destroy(self):
         glDeleteVertexArrays(1, (self.vao,))

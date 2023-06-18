@@ -44,7 +44,7 @@ class App:
 
         self.cube_mesh = Mesh("models/monkey.obj")
 
-        self.shader = self.create_shader("shaders/vertex.glsl", "shaders/fragment.glsl")
+        self.shader = self.create_shader("shaders/phong_vertex.glsl", "shaders/phong_fragment.glsl")
         glUseProgram(self.shader)
 
         glUniform1i(glGetUniformLocation(self.shader, "imageTexture"), 0)
@@ -115,7 +115,7 @@ class App:
             glUniformMatrix4fv(self.modelMatrixLocation, 1, GL_FALSE, model)
             self.texture.use()
             glBindVertexArray(self.cube_mesh.vao)
-            glDrawArrays(GL_LINES, 0, self.cube_mesh.vertex_count)
+            glDrawArrays(GL_TRIANGLES, 0, self.cube_mesh.vertex_count)
 
             pg.display.flip()
 

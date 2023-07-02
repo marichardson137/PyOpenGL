@@ -10,22 +10,20 @@ class VerletObject:
 
 
 class Solver:
-    SLOW_FACTOR = 1/1000
+    time_step = 0.1
 
     gravity = np.array([0.0, -9.8, 0.0])
 
     def __init__(self, verlet_objects):
         self.verlet_objects = verlet_objects
 
-    def update(self, dt):
-        dt = dt * Solver.SLOW_FACTOR
-        print(dt)
+    def update(self):
         # ss = 5
         # sub_dt = dt / ss
         # for s in range(ss):
         self.apply_forces()
         self.apply_constraints()
-        self.update_positions(0.017)
+        self.update_positions(Solver.time_step)
 
     def update_positions(self, dt):
         for obj in self.verlet_objects:

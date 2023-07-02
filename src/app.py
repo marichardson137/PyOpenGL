@@ -1,3 +1,5 @@
+import time
+
 import pygame as pg
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileShader, compileProgram
@@ -24,7 +26,6 @@ class Window:
         pg.display.set_mode((Window.WIDTH, Window.HEIGHT), pg.OPENGL | pg.DOUBLEBUF)
 
         self.clock = pg.time.Clock()
-        self.dt = 17
 
         glClearColor(0.1, 0.1, 0.1, 1.0)
 
@@ -49,6 +50,7 @@ class Window:
 
         running = True
         while running:
+
             # Poll events
             for event in pg.event.get():
                 if event.type == pg.QUIT:
@@ -60,7 +62,7 @@ class Window:
             self.shader.use()
 
             # Update the positions of all the balls
-            self.solver.update(self.dt)
+            self.solver.update()
 
             # Render the balls
             for verlet in self.solver.verlet_objects:
@@ -69,8 +71,8 @@ class Window:
             pg.display.flip()
 
             # Timing
-            self.dt = self.clock.tick(60)
-            pg.display.set_caption(f'FPS: {int(self.clock.get_fps())} | MS: {self.dt}')
+            self.clock.tick(60)
+            pg.display.set_caption(f'FPS: {int(self.clock.get_fps())}')
 
         self.quit()
 

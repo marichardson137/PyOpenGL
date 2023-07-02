@@ -5,9 +5,10 @@ from OpenGL.GL.shaders import compileShader, compileProgram
 import numpy as np
 import pyrr
 
+from src.graphics_api import draw_sphere
 from src.model import Model, Texture, Mesh
 from src.shader import Shader
-from src.verlet import VerletObject
+from src.verlet import VerletObject, Solver
 
 
 class Window:
@@ -21,11 +22,9 @@ class Window:
         pg.display.gl_set_attribute(pg.GL_CONTEXT_MINOR_VERSION, 3)
         pg.display.gl_set_attribute(pg.GL_CONTEXT_PROFILE_MASK, pg.GL_CONTEXT_PROFILE_CORE)
         pg.display.set_mode((Window.WIDTH, Window.HEIGHT), pg.OPENGL | pg.DOUBLEBUF)
-        pg.display.set_caption("ball simulation")
 
         self.clock = pg.time.Clock()
-        self.dt = 16.6
-        self.slow_down = 1000
+        self.dt = 17
 
         glClearColor(0.1, 0.1, 0.1, 1.0)
 
@@ -39,7 +38,9 @@ class Window:
         self.ball_count = 0
         self.font = pg.font.Font("assets/Monocode.ttf", 30)
 
-        self.instantiate_verlets()
+        self.solver = self.instantiate_verlets()
+        self.sphere_mesh = Mesh("models/sphere.obj")
+
 
         self.setup_shader()
         self.run()
@@ -58,42 +59,34 @@ class Window:
 
             self.shader.use()
 
-            substeps = 100
-            sub_dt = self.dt / substeps
-            for s in range(substeps):
-                # Update and draw balls
-                for verlet in self.verlets:
-                    verlet.update(sub_dt / self.slow_down)
-                    verlet.model.render(self.modelMatrixLocation)
+            # Update the positions of all the balls
+            self.solver.update(self.dt)
 
-
+            # Render the balls
+            for verlet in self.solver.verlet_objects:
+                draw_sphere(self.sphere_mesh, self.modelMatrixLocation, verlet.pos_curr)
 
             pg.display.flip()
 
             # Timing
             self.dt = self.clock.tick(60)
-            pg.display.set_caption(f'ballz simulation - FPS: {int(self.clock.get_fps())}')
+            pg.display.set_caption(f'FPS: {int(self.clock.get_fps())} | MS: {self.dt}')
 
         self.quit()
 
     def quit(self):
-        for verlet in self.verlets:
-            verlet.model.destroy()
+        self.sphere_mesh.destroy()
         # self.texture.destroy()
         self.shader.destroy()
         pg.quit()
 
     def instantiate_verlets(self):
-        self.verlets = []
-
-        sphere = Model("models/sphere.obj", scale=0.5)
-        for x in range(20):
-            verlet = VerletObject(sphere, position=((x-10.0) / 2.0, x / 2, -10.0))
-            self.verlets.append(verlet)
-
-    def display_info(self):
-        text = self.font.render(f'FPS: ', True, pg.Color(255, 255, 255, 255))
-        pg.display.get_surface().blit(text, (0, 0))
+        verlets = []
+        # for x in range(20):
+        #     verlet = VerletObject(position=((x-10.0) / 2.0, x / 2, -10.0))
+        #     verlets.append(verlet)
+        verlets.append(VerletObject(position=(0, 0, -10)))
+        return Solver(verlets)
 
     def setup_shader(self):
         self.shader = Shader("shaders/phong_vertex.glsl", "shaders/phong_fragment.glsl")

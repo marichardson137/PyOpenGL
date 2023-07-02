@@ -3,31 +3,45 @@ import numpy as np
 
 class VerletObject:
 
-    gravity = np.array([0.0, -9.8, 0.0])
-
-    def __init__(self, model, position=(0.0, 0.0, 0.0), velocity=(0.0, 0.0, 0.0)):
-        self.model = model
-        self.position = np.array(position)
-        self.velocity = np.array(velocity)
+    def __init__(self, position=(0.0, 0.0, 0.0)):
+        self.pos_curr = np.array(position)
+        self.pos_old = np.array(position)
         self.acceleration = np.zeros(3)
 
+
+class Solver:
+    SLOW_FACTOR = 1/1000
+
+    gravity = np.array([0.0, -9.8, 0.0])
+
+    def __init__(self, verlet_objects):
+        self.verlet_objects = verlet_objects
+
     def update(self, dt):
-        new_position = self.position + self.velocity * dt + 0.5 * self.acceleration * dt * dt
-        new_acceleration = self.apply_forces()
-        new_velocity = self.velocity + 0.5 * (self.acceleration + new_acceleration) * dt
-
-        self.position = new_position
-        self.velocity = new_velocity
-        self.acceleration = new_acceleration
-
+        dt = dt * Solver.SLOW_FACTOR
+        print(dt)
+        # ss = 5
+        # sub_dt = dt / ss
+        # for s in range(ss):
+        self.apply_forces()
         self.apply_constraints()
+        self.update_positions(0.017)
 
-        self.model.position = self.position
+    def update_positions(self, dt):
+        for obj in self.verlet_objects:
+            displacement = obj.pos_curr - obj.pos_old
+            obj.pos_old = obj.pos_curr
+            obj.pos_curr = obj.pos_curr + displacement + obj.acceleration * dt * dt
+            obj.acceleration = np.zeros(3, dtype=np.float64)
+
+
+
+    def apply_forces(self,):
+        for obj in self.verlet_objects:
+            obj.acceleration += Solver.gravity
 
     def apply_constraints(self):
-        if self.position[1] <= -2.5:
-            self.acceleration = np.zeros(3)
-            self.velocity = np.array([0.0, 5.0, 0.0])
+        for obj in self.verlet_objects:
+            if obj.pos_curr[1] <= -3:
+                obj.pos_old[1] = obj.pos_curr[1] + (obj.pos_curr[1] - obj.pos_old[1])
 
-    def apply_forces(self):
-        return VerletObject.gravity

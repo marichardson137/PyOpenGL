@@ -58,10 +58,13 @@ class Window:
 
             self.shader.use()
 
-            # Update and draw balls
-            for verlet in self.verlets:
-                verlet.update(self.dt / self.slow_down)
-                verlet.model.render(self.modelMatrixLocation)
+            substeps = 100
+            sub_dt = self.dt / substeps
+            for s in range(substeps):
+                # Update and draw balls
+                for verlet in self.verlets:
+                    verlet.update(sub_dt / self.slow_down)
+                    verlet.model.render(self.modelMatrixLocation)
 
 
 
@@ -69,7 +72,7 @@ class Window:
 
             # Timing
             self.dt = self.clock.tick(60)
-            # print(self.clock.get_fps())
+            pg.display.set_caption(f'ballz simulation - FPS: {int(self.clock.get_fps())}')
 
         self.quit()
 
@@ -85,7 +88,7 @@ class Window:
 
         sphere = Model("models/sphere.obj", scale=0.5)
         for x in range(20):
-            verlet = VerletObject(sphere, position=((x-10.0) / 2.0, x, -10.0))
+            verlet = VerletObject(sphere, position=((x-10.0) / 2.0, x / 2, -10.0))
             self.verlets.append(verlet)
 
     def display_info(self):

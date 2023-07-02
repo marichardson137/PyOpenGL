@@ -25,7 +25,7 @@ class VerletObject:
         self.model.position = self.position
 
     def apply_constraints(self):
-        if self.position[1] <= -1.5:
+        if self.position[1] <= -2.5:
             self.acceleration = np.zeros(3)
             self.velocity = np.array([0.0, 5.0, 0.0])
 

@@ -39,10 +39,7 @@ class Window:
         self.ball_count = 0
         self.font = pg.font.Font("assets/Monocode.ttf", 30)
 
-        self.instantiate_models()
-
-        sphere = Model("models/sphere.obj")
-        self.verlet = VerletObject(sphere, position=(0, 0, -5))
+        self.instantiate_verlets()
 
         self.setup_shader()
         self.run()
@@ -61,14 +58,12 @@ class Window:
 
             self.shader.use()
 
-            # Update and draw models
-            for model in self.models:
-                model.rotation[2] += 0.5
-                model.render(self.modelMatrixLocation)
+            # Update and draw balls
+            for verlet in self.verlets:
+                verlet.update(self.dt / self.slow_down)
+                verlet.model.render(self.modelMatrixLocation)
 
-            self.verlet.update(self.dt / self.slow_down)
-            self.verlet.model.render(self.modelMatrixLocation)
-            print(self.verlet.position)
+
 
             pg.display.flip()
 
@@ -79,20 +74,19 @@ class Window:
         self.quit()
 
     def quit(self):
-        for model in self.models:
-            model.destroy()
+        for verlet in self.verlets:
+            verlet.model.destroy()
         # self.texture.destroy()
         self.shader.destroy()
         pg.quit()
 
-    def instantiate_models(self):
-        self.models = []
-        # for x in range(5):
-        #     for y in range(5):
-        #         for z in range(5):
-        #             self.ball_count += 1
-        # sphere = Model("models/sphere.obj", position=[x-2, y-2, z-10])
-        # self.models.append(sphere)
+    def instantiate_verlets(self):
+        self.verlets = []
+
+        sphere = Model("models/sphere.obj", scale=0.5)
+        for x in range(20):
+            verlet = VerletObject(sphere, position=((x-10.0) / 2.0, x, -10.0))
+            self.verlets.append(verlet)
 
     def display_info(self):
         text = self.font.render(f'FPS: ', True, pg.Color(255, 255, 255, 255))

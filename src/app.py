@@ -66,7 +66,7 @@ class Window:
 
             # Render the balls
             for verlet in self.solver.verlet_objects:
-                draw_sphere(self.sphere_mesh, self.modelMatrixLocation, verlet.pos_curr)
+                draw_sphere(self.sphere_mesh, self.modelMatrixLocation, verlet.pos_curr, scale=verlet.radius)
 
             pg.display.flip()
 
@@ -84,10 +84,9 @@ class Window:
 
     def instantiate_verlets(self):
         verlets = []
-        # for x in range(20):
-        #     verlet = VerletObject(position=((x-10.0) / 2.0, x / 2, -10.0))
-        #     verlets.append(verlet)
-        verlets.append(VerletObject(position=(0, 0, -10)))
+        for x in range(20):
+            verlet = VerletObject(position=((x-10.0) / 2.0, x / 10, -10.0), radius=0.5)
+            verlets.append(verlet)
         return Solver(verlets)
 
     def setup_shader(self):

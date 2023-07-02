@@ -5,24 +5,27 @@ from OpenGL.GL.shaders import compileShader, compileProgram
 import numpy as np
 import pyrr
 
-from src.model import Model, Material
+from src.model import Model, Texture, Mesh
+from src.shader import Shader
+from src.verlet import VerletObject
 
 
 class Window:
+    WIDTH = 900
+    HEIGHT = 600
 
     def __init__(self):
-
-        self.WIDTH = 900
-        self.HEIGHT = 600
 
         pg.init()
         pg.display.gl_set_attribute(pg.GL_CONTEXT_MAJOR_VERSION, 3)
         pg.display.gl_set_attribute(pg.GL_CONTEXT_MINOR_VERSION, 3)
         pg.display.gl_set_attribute(pg.GL_CONTEXT_PROFILE_MASK, pg.GL_CONTEXT_PROFILE_CORE)
-        pg.display.set_mode((self.WIDTH, self.HEIGHT), pg.OPENGL | pg.DOUBLEBUF)
+        pg.display.set_mode((Window.WIDTH, Window.HEIGHT), pg.OPENGL | pg.DOUBLEBUF)
         pg.display.set_caption("ball simulation")
 
         self.clock = pg.time.Clock()
+        self.dt = 16.6
+        self.slow_down = 1000
 
         glClearColor(0.1, 0.1, 0.1, 1.0)
 
@@ -33,29 +36,16 @@ class Window:
         # glFrontFace(GL_CW)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-        self.models = None
-        self.shader = None
-        self.modelMatrixLocation = None
+        self.ball_count = 0
+        self.font = pg.font.Font("assets/Monocode.ttf", 30)
 
         self.instantiate_models()
+
+        sphere = Model("models/sphere.obj")
+        self.verlet = VerletObject(sphere, position=(0, 0, -5))
+
         self.setup_shader()
-
         self.run()
-
-    def create_shader(self, vertex_filepath, fragment_filepath):
-
-        with open(vertex_filepath, 'r') as f:
-            vertex_src = f.readlines()
-
-        with open(fragment_filepath, 'r') as f:
-            fragment_src = f.readlines()
-
-        shader = compileProgram(
-            compileShader(vertex_src, GL_VERTEX_SHADER),
-            compileShader(fragment_src, GL_FRAGMENT_SHADER)
-        )
-
-        return shader
 
     def run(self):
 
@@ -69,18 +59,22 @@ class Window:
             # Refresh screen
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-            glUseProgram(self.shader)
+            self.shader.use()
 
             # Update and draw models
             for model in self.models:
                 model.rotation[2] += 0.5
-                model.update_transformation()
-                model.draw(self.modelMatrixLocation)
+                model.render(self.modelMatrixLocation)
+
+            self.verlet.update(self.dt / self.slow_down)
+            self.verlet.model.render(self.modelMatrixLocation)
+            print(self.verlet.position)
 
             pg.display.flip()
 
             # Timing
-            self.clock.tick(60)
+            self.dt = self.clock.tick(60)
+            # print(self.clock.get_fps())
 
         self.quit()
 
@@ -88,33 +82,40 @@ class Window:
         for model in self.models:
             model.destroy()
         # self.texture.destroy()
-        glDeleteProgram(self.shader)
+        self.shader.destroy()
         pg.quit()
 
     def instantiate_models(self):
         self.models = []
-        for x in range(5):
-            sphere = Model("models/sphere.obj", position=[x-2, 0, -5])
-            self.models.append(sphere)
+        # for x in range(5):
+        #     for y in range(5):
+        #         for z in range(5):
+        #             self.ball_count += 1
+        # sphere = Model("models/sphere.obj", position=[x-2, y-2, z-10])
+        # self.models.append(sphere)
+
+    def display_info(self):
+        text = self.font.render(f'FPS: ', True, pg.Color(255, 255, 255, 255))
+        pg.display.get_surface().blit(text, (0, 0))
 
     def setup_shader(self):
-        self.shader = self.create_shader("shaders/phong_vertex.glsl", "shaders/phong_fragment.glsl")
-        glUseProgram(self.shader)
+        self.shader = Shader("shaders/phong_vertex.glsl", "shaders/phong_fragment.glsl")
+        self.shader.use()
 
         # glUniform1i(glGetUniformLocation(self.shader, "imageTexture"), 0)
         # self.texture = Material("textures/leet.png")
 
         projection = pyrr.matrix44.create_perspective_projection(
-            fovy=45, aspect=self.WIDTH / self.HEIGHT,
+            fovy=45, aspect=Window.WIDTH / Window.HEIGHT,
             near=0.1, far=100, dtype=np.float32
         )
 
         glUniformMatrix4fv(
-            glGetUniformLocation(self.shader, "projection"),
+            glGetUniformLocation(self.shader.shader_id, "projection"),
             1, GL_FALSE, projection
         )
 
-        self.modelMatrixLocation = glGetUniformLocation(self.shader, "model")
+        self.modelMatrixLocation = glGetUniformLocation(self.shader.shader_id, "model")
 
 
 if __name__ == '__main__':

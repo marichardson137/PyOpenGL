@@ -6,8 +6,14 @@ import numpy as np
 
 class Model:
 
+    mesh_list = {}
+
     def __init__(self, filename, position=(0, 0, 0), rotation=(0, 0, 0), scale=1):
-        self.mesh = Mesh(filename)
+        if filename in Model.mesh_list:
+            self.mesh = Model.mesh_list.get(filename)
+        else:
+            self.mesh = Mesh(filename)
+            Model.mesh_list[filename] = self.mesh
         self.position = np.array(position, dtype=np.float32)
         self.rotation = np.array(rotation, dtype=np.float32)
         self.scale = np.array([scale] * 3, dtype=np.float32)
@@ -34,7 +40,8 @@ class Model:
             )
         )
 
-    def draw(self, modelMatrixLocation):
+    def render(self, modelMatrixLocation):
+        self.update_transformation()
         glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, self.model)
         # self.texture.use()
         glBindVertexArray(self.mesh.vao)
@@ -106,7 +113,7 @@ class Mesh:
         glDeleteBuffers(1, (self.vbo,))
 
 
-class Material:
+class Texture:
 
     def __init__(self, filepath):
         self.texture = glGenTextures(1)

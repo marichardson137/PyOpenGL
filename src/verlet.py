@@ -49,12 +49,12 @@ class Solver:
         #         obj.pos_old[1] = obj.pos_curr[1] + displacement
 
         c_radius = 4
-        c_position = (0, 0, -10)
+        c_position = np.array((0, 0, -10))
 
         # Circle (Convex)
         for obj in self.verlet_objects:
             disp = obj.pos_curr - c_position
             dist = np.sqrt(disp.dot(disp))
-            if dist > c_radius - obj.radius:
+            if dist > c_radius - obj.radius * 2:
                 n = disp / dist
-                obj.pos_curr = c_position + n * (dist - obj.radius)
+                obj.pos_curr = c_position + n * (c_radius - obj.radius * 2)

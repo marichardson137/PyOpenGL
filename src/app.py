@@ -85,7 +85,7 @@ class Window:
     def instantiate_verlets(self):
         verlets = []
         for x in range(5):
-            verlet = VerletObject(position=((x - 5) / 2.0, x / 10, -10.0), radius=0.5)
+            verlet = VerletObject(position=((x - 5) / 2.0, x / 10, -10), radius=0.5)
             verlets.append(verlet)
         return Solver(verlets)
 

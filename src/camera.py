@@ -32,7 +32,6 @@ class Camera:
 
     def update_view(self, viewMatrixLocation):
         self.update_vectors()
-        print(self.yaw, self.pitch, self.position)
         view = pyrr.matrix44.create_look_at(
             eye=self.position,
             target=self.position + self.forwards,

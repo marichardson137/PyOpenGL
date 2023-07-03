@@ -25,6 +25,7 @@ class Solver:
         sub_dt = Solver.time_step / Solver.sub_steps
         for step in range(Solver.sub_steps):
             self.apply_forces()
+            self.check_collisions()
             self.apply_constraints()
             self.update_positions(sub_dt)
 
@@ -40,6 +41,20 @@ class Solver:
     def apply_forces(self,):
         for obj in self.verlet_objects:
             obj.acceleration += Solver.gravity
+
+    def check_collisions(self):
+        for a in self.verlet_objects:
+            for b in self.verlet_objects:
+                axis = a.pos_curr - b.pos_curr
+                dist = np.sqrt(axis.dot(axis))
+                if dist == 0:
+                    continue
+                if dist < a.radius + b.radius:
+                    n = axis / dist
+                    delta = a.radius + b.radius
+                    a.pos_curr += 0.5 * delta * n
+                    b.pos_curr -= 0.5 * delta * n
+
 
     def apply_constraints(self):
         # Floor

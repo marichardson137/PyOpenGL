@@ -137,8 +137,12 @@ class Window:
 
     def instantiate_verlets(self):
         verlets = []
-        for x in range(25):
-            verlet = VerletObject(position=(np.random.rand(3) * 2), radius=0.25)
+        num_balls = 30
+        for v in range(num_balls):
+            x = np.cos(np.deg2rad(360 / num_balls * v))
+            y = np.sin(np.deg2rad(360 / num_balls * v))
+            print(x, y)
+            verlet = VerletObject(position=(x * 3, 0, y * 3), radius=0.15)
             verlets.append(verlet)
         return Solver(verlets, self.container)
 

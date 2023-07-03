@@ -51,7 +51,7 @@ class Solver:
                     continue
                 if dist < a.radius + b.radius:
                     n = axis / dist
-                    delta = a.radius + b.radius
+                    delta = a.radius + b.radius - dist
                     a.pos_curr += 0.5 * delta * n
                     b.pos_curr -= 0.5 * delta * n
 

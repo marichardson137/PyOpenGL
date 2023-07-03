@@ -110,6 +110,10 @@ class Window:
             self.camera.position -= self.camera.forwards * speed
         if keys[pg.K_d]:
             self.camera.position += self.camera.right * speed
+        if keys[pg.K_q]:
+            self.camera.position += self.camera.up * speed
+        if keys[pg.K_e]:
+            self.camera.position -= self.camera.up * speed
 
 
     def handle_mouse(self):
@@ -133,8 +137,8 @@ class Window:
 
     def instantiate_verlets(self):
         verlets = []
-        for x in range(5):
-            verlet = VerletObject(position=((x - 5) / 2.0, x / 10, 2), radius=0.5)
+        for x in range(25):
+            verlet = VerletObject(position=(np.random.rand(3) * 2), radius=0.25)
             verlets.append(verlet)
         return Solver(verlets, self.container)
 

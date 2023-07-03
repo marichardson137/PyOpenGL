@@ -18,6 +18,7 @@ class Model:
         self.rotation = np.array(rotation, dtype=np.float32)
         self.scale = np.array([scale] * 3, dtype=np.float32)
         self.model = None
+        self.render_method = GL_TRIANGLES
 
     def update_transformation(self):
         self.model = pyrr.matrix44.create_identity(dtype=np.float32)
@@ -45,7 +46,7 @@ class Model:
         glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, self.model)
         # self.texture.use()
         glBindVertexArray(self.mesh.vao)
-        glDrawArrays(GL_TRIANGLES, 0, self.mesh.vertex_count)
+        glDrawArrays(self.render_method, 0, self.mesh.vertex_count)
 
     def destroy(self):
         self.mesh.destroy()

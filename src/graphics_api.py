@@ -26,7 +26,6 @@ def draw_sphere(mesh, model_location, position, rotation=(0, 0, 0), scale=1):
             dtype=np.float32
         )
     )
-
     glUniformMatrix4fv(model_location, 1, GL_FALSE, model)
     glBindVertexArray(mesh.vao)
     glDrawArrays(GL_TRIANGLES, 0, mesh.vertex_count)

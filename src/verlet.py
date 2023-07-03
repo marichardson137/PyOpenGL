@@ -17,8 +17,9 @@ class Solver:
     gravity = np.array([0.0, -1000, 0.0])
     damping = 0.8
 
-    def __init__(self, verlet_objects):
+    def __init__(self, verlet_objects, container):
         self.verlet_objects = verlet_objects
+        self.container = container
 
     def update(self):
         sub_dt = Solver.time_step / Solver.sub_steps
@@ -48,13 +49,13 @@ class Solver:
         #         obj.pos_curr[1] = -3
         #         obj.pos_old[1] = obj.pos_curr[1] + displacement
 
-        c_radius = 4
-        c_position = np.array((0, 0, -10))
+        c_radius = self.container.scale[0]
+        c_position = self.container.position
 
         # Circle (Convex)
         for obj in self.verlet_objects:
             disp = obj.pos_curr - c_position
             dist = np.sqrt(disp.dot(disp))
-            if dist > c_radius - obj.radius * 2:
+            if dist > c_radius - obj.radius:
                 n = disp / dist
-                obj.pos_curr = c_position + n * (c_radius - obj.radius * 2)
+                obj.pos_curr = c_position + n * (c_radius - obj.radius)

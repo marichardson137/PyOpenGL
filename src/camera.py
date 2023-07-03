@@ -29,7 +29,6 @@ class Camera:
         self.up = np.cross(self.right, self.forwards)
         self.up = self.up / np.linalg.norm(self.up)
 
-
     def update_view(self, viewMatrixLocation):
         self.update_vectors()
         view = pyrr.matrix44.create_look_at(

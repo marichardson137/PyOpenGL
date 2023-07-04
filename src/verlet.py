@@ -4,22 +4,22 @@ import numpy as np
 class VerletObject:
 
     def __init__(self, position=(0.0, 0.0, 0.0), radius=1):
-        self.pos_curr = np.array(position)
-        self.pos_old = np.array(position)
+        self.pos_curr = np.array(position, dtype=np.float64)
+        self.pos_old = np.array(position, dtype=np.float64)
         self.acceleration = np.zeros(3)
         self.radius = radius
 
 
 class Solver:
     time_step = 0.0015
-    sub_steps = 12
+    sub_steps = 2
 
     gravity = np.array([0.0, -1000, 0.0])
     damping = 0.8
 
-    def __init__(self, verlet_objects, container):
-        self.verlet_objects = verlet_objects
+    def __init__(self, container, verlet_objects=[]):
         self.container = container
+        self.verlet_objects = verlet_objects
 
     def update(self):
         sub_dt = Solver.time_step / Solver.sub_steps
@@ -59,9 +59,9 @@ class Solver:
     def apply_constraints(self):
         # Floor
         # for obj in self.verlet_objects:
-        #     if obj.pos_curr[1] <= -3:
+        #     if obj.pos_curr[1] <= -2:
         #         displacement = obj.pos_curr[1] - obj.pos_old[1]
-        #         obj.pos_curr[1] = -3
+        #         obj.pos_curr[1] = -2
         #         obj.pos_old[1] = obj.pos_curr[1] + displacement
 
         c_radius = self.container.scale[0]

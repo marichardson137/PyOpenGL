@@ -40,9 +40,9 @@ class Window:
         # glFrontFace(GL_CW)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-        self.ball_count = 0
         self.font = pg.font.Font("assets/Monocode.ttf", 30)
 
+        self.num_balls = 100
         self.container = Model("models/sphere.obj", position=(0, 0, 0), scale=4)
         self.container.render_method = GL_LINES
 
@@ -55,6 +55,8 @@ class Window:
         self.run()
 
     def run(self):
+
+        self.num_frames = 0
 
         running = True
         while running:
@@ -80,6 +82,11 @@ class Window:
             # Update camera
             self.camera.update_view(self.viewMatrixLocation)
 
+            # Add balls to the simulation
+            if self.num_frames >= 30:
+                self.solver.verlet_objects.append(VerletObject(position=(0, 3, 0), radius=0.10))
+                self.num_frames = 0
+
             # Update the positions of all the balls
             self.solver.update()
 
@@ -95,6 +102,7 @@ class Window:
             # Timing
             self.dt = self.clock.tick(60)
             pg.display.set_caption(f'FPS: {int(self.clock.get_fps())}')
+            self.num_frames += 1
 
         self.quit()
 
@@ -137,14 +145,13 @@ class Window:
 
     def instantiate_verlets(self):
         verlets = []
-        num_balls = 30
-        for v in range(num_balls):
-            x = np.cos(np.deg2rad(360 / num_balls * v))
-            y = np.sin(np.deg2rad(360 / num_balls * v))
+        for v in range(self.num_balls):
+            x = np.cos(np.deg2rad(360 / self.num_balls * v))
+            y = np.sin(np.deg2rad(360 / self.num_balls * v))
             print(x, y)
-            verlet = VerletObject(position=(x * 3, 0, y * 3), radius=0.15)
+            verlet = VerletObject(position=(x * 3, 0, y * 3), radius=0.10)
             verlets.append(verlet)
-        return Solver(verlets, self.container)
+        return Solver(self.container)
 
     def setup_shader(self):
         self.shader = Shader("shaders/phong_vertex.glsl", "shaders/phong_fragment.glsl")

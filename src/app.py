@@ -42,7 +42,7 @@ class Window:
 
         self.font = pg.font.Font("assets/Monocode.ttf", 30)
 
-        self.num_balls = 100
+        self.num_balls = 0
         self.container = Model("models/sphere.obj", position=(0, 0, 0), scale=4)
         self.container.render_method = GL_LINES
 
@@ -84,7 +84,10 @@ class Window:
 
             # Add balls to the simulation
             if self.num_frames >= 30:
-                self.solver.verlet_objects.append(VerletObject(position=(0, 3, 0), radius=0.10))
+                x = np.cos(np.deg2rad(360 / 8 * self.num_balls))
+                y = np.sin(np.deg2rad(360 / 8 * self.num_balls))
+                self.solver.verlet_objects.append(VerletObject(position=(x * 3, 0, y * 3), radius=0.3))
+                self.num_balls += 1
                 self.num_frames = 0
 
             # Update the positions of all the balls
@@ -109,7 +112,7 @@ class Window:
     def handle_keyboard(self):
         keys = pg.key.get_pressed()
 
-        speed = 0.1
+        speed = 0.05
         if keys[pg.K_w]:
             self.camera.position += self.camera.forwards * speed
         if keys[pg.K_a]:
@@ -126,8 +129,8 @@ class Window:
 
     def handle_mouse(self):
         (dx, dy) = pg.mouse.get_rel()
-        dx *= 0.2
-        dy *= 0.2
+        dx *= 0.1
+        dy *= 0.1
         self.camera.yaw += dx
         self.camera.pitch -= dy
         if self.camera.pitch > 89:
@@ -148,7 +151,6 @@ class Window:
         for v in range(self.num_balls):
             x = np.cos(np.deg2rad(360 / self.num_balls * v))
             y = np.sin(np.deg2rad(360 / self.num_balls * v))
-            print(x, y)
             verlet = VerletObject(position=(x * 3, 0, y * 3), radius=0.10)
             verlets.append(verlet)
         return Solver(self.container)

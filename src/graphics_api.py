@@ -3,7 +3,7 @@ import pyrr
 from OpenGL.GL import *
 
 
-def draw_mesh(shader, mesh, model_location, position, rotation=(0, 0, 0), scale=1):
+def draw_mesh(shader, mesh, model_location, position, rotation=(0, 0, 0), scale=1, method=GL_TRIANGLES):
     position = np.array(position, dtype=np.float32)
     rotation = np.array(rotation, dtype=np.float32)
     scale = np.array([scale] * 3, dtype=np.float32)
@@ -30,7 +30,7 @@ def draw_mesh(shader, mesh, model_location, position, rotation=(0, 0, 0), scale=
 
     glUniformMatrix4fv(model_location, 1, GL_FALSE, model)
     glBindVertexArray(mesh.vao)
-    glDrawArrays(GL_TRIANGLES, 0, mesh.vertex_count)
+    glDrawArrays(method, 0, mesh.vertex_count)
 
     shader.detach()
 

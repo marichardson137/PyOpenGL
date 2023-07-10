@@ -91,7 +91,7 @@ class Window:
 
             # Update outline shader
             self.outline_shader.use()
-            glUniform1f(self.outlineLocationOutline, 1.08)
+            glUniform1f(self.outlineLocationOutline, 0.08)
             self.outline_shader.detach()
 
             # Render container
@@ -102,14 +102,15 @@ class Window:
 
             glStencilFunc(GL_NOTEQUAL, 1, 0xFF)
             glStencilMask(0x00)
-            # glDisable(GL_DEPTH_TEST)
+            glDisable(GL_DEPTH_TEST)
 
             draw_mesh(self.outline_shader, self.container.mesh, self.modelMatrixLocationOutline,
-                      self.container.position, scale=self.container.scale)
+                      self.container.position, scale=self.container.scale, method=GL_LINES)
 
             glStencilMask(0xFF)
             glStencilFunc(GL_ALWAYS, 0, 0xFF)
-            # glEnable(GL_DEPTH_TEST)
+
+            glEnable(GL_DEPTH_TEST)
 
             # Add balls to the simulation
             if self.num_frames >= 30:

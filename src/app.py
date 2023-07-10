@@ -5,7 +5,7 @@ import numpy as np
 import pyrr
 
 from src.camera import Camera
-from src.graphics_api import draw_sphere
+from src.graphics_api import draw_mesh
 from src.model import Model, Texture, Mesh
 from src.shader import Shader
 from src.verlet import VerletObject, Solver
@@ -18,7 +18,6 @@ class Window:
     GLOBAL_X = np.array([1, 0, 0], dtype=np.float64)
     GLOBAL_Y = np.array([0, 1, 0], dtype=np.float64)
     GLOBAL_Z = np.array([0, 0, 1], dtype=np.float64)
-
 
     def __init__(self):
 
@@ -33,6 +32,7 @@ class Window:
 
         glClearColor(0.1, 0.1, 0.1, 1.0)
 
+        # Render settings
         glEnable(GL_BLEND)
         glEnable(GL_DEPTH_TEST)
         # glEnable(GL_CULL_FACE)
@@ -40,10 +40,15 @@ class Window:
         # glFrontFace(GL_CW)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
+        # Outlines
+        glEnable(GL_STENCIL_TEST)
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE)
+
         self.font = pg.font.Font("assets/Monocode.ttf", 30)
 
         self.num_balls = 0
         self.container = Model("models/sphere.obj", position=(0, 0, 0), scale=4)
+        # self.container = Model("models/cube.obj", position=(0, 0, 0), scale=5)
         self.container.render_method = GL_LINES
 
         self.solver = self.instantiate_verlets()
@@ -74,19 +79,47 @@ class Window:
             self.handle_mouse()
 
             # Refresh screen
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-
-            # Load shader
-            self.shader.use()
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)
 
             # Update camera
+            self.shader.use()
             self.camera.update_view(self.viewMatrixLocation)
+            self.shader.detach()
+            self.outline_shader.use()
+            self.camera.update_view(self.viewMatrixLocationOutline)
+            self.outline_shader.detach()
+
+            # Update outline shader
+            self.outline_shader.use()
+            glUniform1f(self.outlineLocationOutline, 1.08)
+            self.outline_shader.detach()
+
+            # Render container
+            glStencilFunc(GL_ALWAYS, 1, 0xFF)
+            glStencilMask(0xFF)
+            draw_mesh(self.shader, self.container.mesh, self.modelMatrixLocation, self.container.position,
+                      scale=self.container.scale)
+
+            glStencilFunc(GL_NOTEQUAL, 1, 0xFF)
+            glStencilMask(0x00)
+            # glDisable(GL_DEPTH_TEST)
+
+            draw_mesh(self.outline_shader, self.container.mesh, self.modelMatrixLocationOutline,
+                      self.container.position, scale=self.container.scale)
+
+            glStencilMask(0xFF)
+            glStencilFunc(GL_ALWAYS, 0, 0xFF)
+            # glEnable(GL_DEPTH_TEST)
 
             # Add balls to the simulation
             if self.num_frames >= 30:
-                x = np.cos(np.deg2rad(360 / 8 * self.num_balls))
-                y = np.sin(np.deg2rad(360 / 8 * self.num_balls))
-                self.solver.verlet_objects.append(VerletObject(position=(x * 3, 0, y * 3), radius=0.3))
+                # x = np.cos(np.deg2rad(360 / 8 * self.num_balls))
+                # y = np.sin(np.deg2rad(360 / 8 * self.num_balls))
+                # self.solver.verlet_objects.append(VerletObject(position=(x * 3, 0, y * 3), radius=0.15))
+
+                self.solver.verlet_objects.append(
+                    VerletObject(position=(np.random.rand() * 2, 0, np.random.rand() * 2), radius=0.2))
+
                 self.num_balls += 1
                 self.num_frames = 0
 
@@ -95,10 +128,10 @@ class Window:
 
             # Render the balls
             for verlet in self.solver.verlet_objects:
-                draw_sphere(self.sphere_mesh, self.modelMatrixLocation, verlet.pos_curr, scale=verlet.radius)
+                draw_mesh(self.shader, self.sphere_mesh, self.modelMatrixLocation, verlet.pos_curr, scale=verlet.radius)
 
-            # Render container
-            self.container.render(self.modelMatrixLocation)
+            # Unbind the VAO and detach the shader programs
+            glBindVertexArray(0)
 
             pg.display.flip()
 
@@ -125,7 +158,6 @@ class Window:
             self.camera.position += self.camera.up * speed
         if keys[pg.K_e]:
             self.camera.position -= self.camera.up * speed
-
 
     def handle_mouse(self):
         (dx, dy) = pg.mouse.get_rel()
@@ -171,9 +203,22 @@ class Window:
             glGetUniformLocation(self.shader.shader_id, "projection"),
             1, GL_FALSE, projection
         )
-
         self.modelMatrixLocation = glGetUniformLocation(self.shader.shader_id, "model")
         self.viewMatrixLocation = glGetUniformLocation(self.shader.shader_id, "view")
+        self.shader.detach()
+
+        # Outline shader
+        self.outline_shader = Shader("shaders/outline_vertex.glsl", "shaders/outline_fragment.glsl")
+        self.outline_shader.use()
+
+        glUniformMatrix4fv(
+            glGetUniformLocation(self.outline_shader.shader_id, "projection"),
+            1, GL_FALSE, projection
+        )
+        self.modelMatrixLocationOutline = glGetUniformLocation(self.outline_shader.shader_id, "model")
+        self.viewMatrixLocationOutline = glGetUniformLocation(self.outline_shader.shader_id, "view")
+        self.outlineLocationOutline = glGetUniformLocation(self.outline_shader.shader_id, "outline")
+        self.outline_shader.detach()
 
 
 if __name__ == '__main__':

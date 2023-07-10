@@ -16,7 +16,7 @@ class Model:
             Model.mesh_list[filename] = self.mesh
         self.position = np.array(position, dtype=np.float32)
         self.rotation = np.array(rotation, dtype=np.float32)
-        self.scale = np.array([scale] * 3, dtype=np.float32)
+        self.scale = scale
         self.model = None
         self.render_method = GL_TRIANGLES
 

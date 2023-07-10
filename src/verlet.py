@@ -36,9 +36,7 @@ class Solver:
             obj.pos_curr = obj.pos_curr + displacement + obj.acceleration * dt * dt
             obj.acceleration = np.zeros(3, dtype=np.float64)
 
-
-
-    def apply_forces(self,):
+    def apply_forces(self):
         for obj in self.verlet_objects:
             obj.acceleration += Solver.gravity
 
@@ -55,7 +53,6 @@ class Solver:
                     a.pos_curr += 0.5 * delta * n
                     b.pos_curr -= 0.5 * delta * n
 
-
     def apply_constraints(self):
         # Floor
         # for obj in self.verlet_objects:
@@ -64,13 +61,26 @@ class Solver:
         #         obj.pos_curr[1] = -2
         #         obj.pos_old[1] = obj.pos_curr[1] + displacement
 
-        c_radius = self.container.scale[0]
-        c_position = self.container.position
-
         # Circle (Convex)
+        c_radius = self.container.scale
+        c_position = self.container.position
         for obj in self.verlet_objects:
             disp = obj.pos_curr - c_position
             dist = np.sqrt(disp.dot(disp))
             if dist > c_radius - obj.radius:
                 n = disp / dist
                 obj.pos_curr = c_position + n * (c_radius - obj.radius)
+
+        # Cube
+        # for obj in self.verlet_objects:
+        #     dim = 2.5 - obj.radius
+        #
+        #     for i in range(3):
+        #         if obj.pos_curr[i] < -dim:
+        #             disp = obj.pos_curr[i] - obj.pos_old[i]
+        #             obj.pos_curr[i] = -dim
+        #             obj.pos_old[i] = obj.pos_curr[i] + disp
+        #         if obj.pos_curr[i] > dim:
+        #             disp = obj.pos_curr[i] - obj.pos_old[i]
+        #             obj.pos_curr[i] = dim
+        #             obj.pos_old[i] = obj.pos_curr[i] + disp

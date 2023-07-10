@@ -60,7 +60,7 @@ class Window:
         self.container = Model("models/sphere.obj", position=(0, 0, 0), scale=4)
         # self.container = Model("models/cube.obj", position=(0, 0, 0), scale=5)
 
-        self.solver = self.instantiate_verlets()
+        self.solver = Solver(self.container)
         self.sphere_mesh = Mesh("models/ico_sphere.obj")
         self.cube_mesh = Mesh("models/cube.obj")
 
@@ -113,7 +113,7 @@ class Window:
                       self.container.position, scale=self.container.scale, method=GL_POINTS)
 
             # Add balls to the simulation
-            if self.num_frames >= 15:
+            if self.num_frames >= 3 and self.num_balls < 100:
                 x = np.cos(np.deg2rad(360 * np.random.rand()))
                 y = np.sin(np.deg2rad(360 * np.random.rand()))
                 self.solver.add_object(VerletObject(position=(x * 2.5, 0, y * 2.5), radius=0.15))
@@ -174,15 +174,6 @@ class Window:
         self.shader.destroy()
         self.outline_shader.destroy()
         pg.quit()
-
-    def instantiate_verlets(self):
-        verlets = []
-        for v in range(self.num_balls):
-            x = np.cos(np.deg2rad(360 / self.num_balls * v))
-            y = np.sin(np.deg2rad(360 / self.num_balls * v))
-            verlet = VerletObject(position=(x * 3, 0, y * 3), radius=0.10)
-            verlets.append(verlet)
-        return Solver(self.container)
 
     def setup_shader(self):
         self.shader = Shader("shaders/phong_vertex.glsl", "shaders/phong_fragment.glsl")

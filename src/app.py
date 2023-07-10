@@ -101,10 +101,10 @@ class Window:
                       self.container.position, scale=self.container.scale, method=GL_POINTS)
 
             # Add balls to the simulation
-            if self.num_frames >= 30:
-                x = np.cos(np.deg2rad(360 / 8 * self.num_balls))
-                y = np.sin(np.deg2rad(360 / 8 * self.num_balls))
-                self.solver.verlet_objects.append(VerletObject(position=(x * 3, 0, y * 3), radius=0.15))
+            if self.num_frames >= 15:
+                x = np.cos(np.deg2rad(360 * np.random.rand()))
+                y = np.sin(np.deg2rad(360 * np.random.rand()))
+                self.solver.verlet_objects.append(VerletObject(position=(x * 2.5, 0, y * 2.5), radius=0.15))
 
                 self.num_balls += 1
                 self.num_frames = 0

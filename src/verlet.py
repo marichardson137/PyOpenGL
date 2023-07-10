@@ -12,12 +12,12 @@ class VerletObject:
 
 class Solver:
     time_step = 0.0015
-    sub_steps = 2
+    sub_steps = 1
 
     gravity = np.array([0.0, -1000, 0.0])
     damping = 0.8
 
-    grid_size = 8
+    grid_size = 10
 
     def __init__(self, container, verlet_objects=[]):
         self.container = container
@@ -35,14 +35,16 @@ class Solver:
             self.update_positions(sub_dt)
 
     def update_grid(self):
-        for x in range(1, Solver.grid_size - 1):
-            for y in range(1, Solver.grid_size - 1):
-                for z in range(1, Solver.grid_size - 1):
+        for x in range(Solver.grid_size):
+            for y in range(Solver.grid_size):
+                for z in range(Solver.grid_size):
                     self.grid[x][y][z] = []
+
+        ran = 10
         for obj in self.verlet_objects:
-            grid_x = int((obj.pos_curr[0] + 4) * 8 / Solver.grid_size)
-            grid_y = int((obj.pos_curr[1] + 4) * 8 / Solver.grid_size)
-            grid_z = int((obj.pos_curr[2] + 4) * 8 / Solver.grid_size)
+            grid_x = int((obj.pos_curr[0] + ran / 2) / ran * Solver.grid_size)
+            grid_y = int((obj.pos_curr[1] + ran / 2) / ran * Solver.grid_size)
+            grid_z = int((obj.pos_curr[2] + ran / 2) / ran * Solver.grid_size)
             self.grid[grid_x][grid_y][grid_z].append(obj)
 
     def update_positions(self, dt):

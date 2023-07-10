@@ -62,11 +62,12 @@ class Window:
 
         self.solver = self.instantiate_verlets()
         self.sphere_mesh = Mesh("models/ico_sphere.obj")
+        self.cube_mesh = Mesh("models/cube.obj")
 
         self.camera_radius = 12
         self.camera_speed = 8
         self.camera = Camera(position=(0, 3, self.camera_radius))
-        self.camera.pitch = -15
+        self.camera.pitch = -14
         self.fix_camera = True
 
         self.setup_shader()
@@ -168,6 +169,7 @@ class Window:
 
     def quit(self):
         self.sphere_mesh.destroy()
+        self.cube_mesh.destroy()
         # self.texture.destroy()
         self.shader.destroy()
         self.outline_shader.destroy()
@@ -217,9 +219,11 @@ class Window:
     def animate_camera(self):
         keys = pg.key.get_pressed()
         if keys[pg.K_w]:
-            self.camera_radius -= 0.1
+            self.camera_radius -= 0.08
+            self.camera.pitch -= 0.3
         if keys[pg.K_s]:
-            self.camera_radius += 0.1
+            self.camera_radius += 0.08
+            self.camera.pitch += 0.3
 
         x = np.cos(np.deg2rad(self.global_time * self.camera_speed))
         z = np.sin(np.deg2rad(self.global_time * self.camera_speed))

@@ -33,4 +33,4 @@ def draw_mesh(shader, mesh, model_location, position, rotation=(0, 0, 0), scale=
     glDrawArrays(method, 0, mesh.vertex_count)
 
     shader.detach()
-
+    glBindVertexArray(0)

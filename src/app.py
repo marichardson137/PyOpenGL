@@ -25,34 +25,38 @@ class Window:
         pg.display.gl_set_attribute(pg.GL_CONTEXT_MAJOR_VERSION, 3)
         pg.display.gl_set_attribute(pg.GL_CONTEXT_MINOR_VERSION, 3)
         pg.display.gl_set_attribute(pg.GL_CONTEXT_PROFILE_MASK, pg.GL_CONTEXT_PROFILE_CORE)
+        pg.display.gl_set_attribute(pg.GL_STENCIL_SIZE, 8)
         pg.display.set_mode((Window.WIDTH, Window.HEIGHT), pg.OPENGL | pg.DOUBLEBUF)
 
         self.clock = pg.time.Clock()
         self.dt = 17
 
         glClearColor(0.1, 0.1, 0.1, 1.0)
+        glClearStencil(0)
 
         # Render settings
-        glEnable(GL_BLEND)
         glEnable(GL_DEPTH_TEST)
-        # glEnable(GL_CULL_FACE)
-        # glCullFace(GL_BACK)
-        # glFrontFace(GL_CW)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glDepthFunc(GL_LESS)
 
-        # Outlines
         glEnable(GL_STENCIL_TEST)
+        glStencilFunc(GL_NOTEQUAL, 1, 0xFF)
         glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE)
+
+        glEnable(GL_CULL_FACE)
+        glCullFace(GL_BACK)
+        glFrontFace(GL_CCW)
+
+        # glEnable(GL_BLEND)
+        # glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         self.font = pg.font.Font("assets/Monocode.ttf", 30)
 
         self.num_balls = 0
         self.container = Model("models/sphere.obj", position=(0, 0, 0), scale=4)
         # self.container = Model("models/cube.obj", position=(0, 0, 0), scale=5)
-        self.container.render_method = GL_LINES
 
         self.solver = self.instantiate_verlets()
-        self.sphere_mesh = Mesh("models/sphere.obj")
+        self.sphere_mesh = Mesh("models/ico_sphere.obj")
 
         self.camera = Camera(position=(0, 0, 10))
 
@@ -89,28 +93,26 @@ class Window:
             self.camera.update_view(self.viewMatrixLocationOutline)
             self.outline_shader.detach()
 
-            # Update outline shader
-            self.outline_shader.use()
-            glUniform1f(self.outlineLocationOutline, 0.08)
-            self.outline_shader.detach()
-
             # Render container
             glStencilFunc(GL_ALWAYS, 1, 0xFF)
             glStencilMask(0xFF)
             draw_mesh(self.shader, self.container.mesh, self.modelMatrixLocation, self.container.position,
-                      scale=self.container.scale)
+                      scale=self.container.scale, method=GL_TRIANGLES)
 
             glStencilFunc(GL_NOTEQUAL, 1, 0xFF)
             glStencilMask(0x00)
             glDisable(GL_DEPTH_TEST)
 
             draw_mesh(self.outline_shader, self.container.mesh, self.modelMatrixLocationOutline,
-                      self.container.position, scale=self.container.scale, method=GL_LINES)
+                      self.container.position, scale=self.container.scale, method=GL_TRIANGLES)
 
             glStencilMask(0xFF)
             glStencilFunc(GL_ALWAYS, 0, 0xFF)
 
             glEnable(GL_DEPTH_TEST)
+            glClear(GL_STENCIL_BUFFER_BIT)
+            glStencilMask(0x00)
+
 
             # Add balls to the simulation
             if self.num_frames >= 30:
@@ -130,9 +132,6 @@ class Window:
             # Render the balls
             for verlet in self.solver.verlet_objects:
                 draw_mesh(self.shader, self.sphere_mesh, self.modelMatrixLocation, verlet.pos_curr, scale=verlet.radius)
-
-            # Unbind the VAO and detach the shader programs
-            glBindVertexArray(0)
 
             pg.display.flip()
 
@@ -177,6 +176,7 @@ class Window:
         self.sphere_mesh.destroy()
         # self.texture.destroy()
         self.shader.destroy()
+        self.outline_shader.destroy()
         pg.quit()
 
     def instantiate_verlets(self):
@@ -211,14 +211,13 @@ class Window:
         # Outline shader
         self.outline_shader = Shader("shaders/outline_vertex.glsl", "shaders/outline_fragment.glsl")
         self.outline_shader.use()
-
         glUniformMatrix4fv(
             glGetUniformLocation(self.outline_shader.shader_id, "projection"),
             1, GL_FALSE, projection
         )
+        glUniform1f(glGetUniformLocation(self.outline_shader.shader_id, "outline"), 0.08)
         self.modelMatrixLocationOutline = glGetUniformLocation(self.outline_shader.shader_id, "model")
         self.viewMatrixLocationOutline = glGetUniformLocation(self.outline_shader.shader_id, "view")
-        self.outlineLocationOutline = glGetUniformLocation(self.outline_shader.shader_id, "outline")
         self.outline_shader.detach()
 
 

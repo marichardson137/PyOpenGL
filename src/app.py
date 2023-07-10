@@ -38,16 +38,19 @@ class Window:
         glEnable(GL_DEPTH_TEST)
         glDepthFunc(GL_LESS)
 
-        glEnable(GL_STENCIL_TEST)
-        glStencilFunc(GL_NOTEQUAL, 1, 0xFF)
-        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE)
-
         glEnable(GL_CULL_FACE)
         glCullFace(GL_BACK)
         glFrontFace(GL_CCW)
 
-        # glEnable(GL_BLEND)
-        # glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+        glPointSize(2.0)
+
+        # glEnable(GL_STENCIL_TEST)
+        # glStencilFunc(GL_NOTEQUAL, 1, 0xFF)
+        # glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE)
+
 
         self.font = pg.font.Font("assets/Monocode.ttf", 30)
 
@@ -94,34 +97,14 @@ class Window:
             self.outline_shader.detach()
 
             # Render container
-            glStencilFunc(GL_ALWAYS, 1, 0xFF)
-            glStencilMask(0xFF)
-            draw_mesh(self.shader, self.container.mesh, self.modelMatrixLocation, self.container.position,
-                      scale=self.container.scale, method=GL_TRIANGLES)
-
-            glStencilFunc(GL_NOTEQUAL, 1, 0xFF)
-            glStencilMask(0x00)
-            glDisable(GL_DEPTH_TEST)
-
             draw_mesh(self.outline_shader, self.container.mesh, self.modelMatrixLocationOutline,
-                      self.container.position, scale=self.container.scale, method=GL_TRIANGLES)
-
-            glStencilMask(0xFF)
-            glStencilFunc(GL_ALWAYS, 0, 0xFF)
-
-            glEnable(GL_DEPTH_TEST)
-            glClear(GL_STENCIL_BUFFER_BIT)
-            glStencilMask(0x00)
-
+                      self.container.position, scale=self.container.scale, method=GL_POINTS)
 
             # Add balls to the simulation
             if self.num_frames >= 30:
-                # x = np.cos(np.deg2rad(360 / 8 * self.num_balls))
-                # y = np.sin(np.deg2rad(360 / 8 * self.num_balls))
-                # self.solver.verlet_objects.append(VerletObject(position=(x * 3, 0, y * 3), radius=0.15))
-
-                self.solver.verlet_objects.append(
-                    VerletObject(position=(np.random.rand() * 2, 0, np.random.rand() * 2), radius=0.2))
+                x = np.cos(np.deg2rad(360 / 8 * self.num_balls))
+                y = np.sin(np.deg2rad(360 / 8 * self.num_balls))
+                self.solver.verlet_objects.append(VerletObject(position=(x * 3, 0, y * 3), radius=0.15))
 
                 self.num_balls += 1
                 self.num_frames = 0
@@ -215,7 +198,7 @@ class Window:
             glGetUniformLocation(self.outline_shader.shader_id, "projection"),
             1, GL_FALSE, projection
         )
-        glUniform1f(glGetUniformLocation(self.outline_shader.shader_id, "outline"), 0.08)
+        glUniform1f(glGetUniformLocation(self.outline_shader.shader_id, "outline"), 0.00)
         self.modelMatrixLocationOutline = glGetUniformLocation(self.outline_shader.shader_id, "model")
         self.viewMatrixLocationOutline = glGetUniformLocation(self.outline_shader.shader_id, "view")
         self.outline_shader.detach()

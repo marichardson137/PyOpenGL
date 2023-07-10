@@ -15,7 +15,7 @@ void main()
     vec3 objectColor = vec3(0.6, 0.3, 0.7);
 
     // ambient
-    float ambientStrength = 0.1;
+    float ambientStrength = 0.3;
     vec3 ambient = ambientStrength * lightColor;
 
     // diffuse

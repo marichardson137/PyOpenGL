@@ -1,3 +1,5 @@
+import time
+
 import pygame as pg
 from OpenGL.GL import *
 # import OpenGL.GLUT as glut
@@ -31,7 +33,7 @@ class Window:
         self.clock = pg.time.Clock()
         self.dt = 17
 
-        glClearColor(0.1, 0.1, 0.1, 1.0)
+        glClearColor(0.08, 0.08, 0.08, 1.0)
         glClearStencil(0)
 
         # Render settings
@@ -61,7 +63,10 @@ class Window:
         self.solver = self.instantiate_verlets()
         self.sphere_mesh = Mesh("models/ico_sphere.obj")
 
-        self.camera = Camera(position=(0, 0, 10))
+        self.camera_radius = 12
+        self.camera_speed = 8
+        self.camera = Camera(position=(0, 0, self.camera_radius))
+        self.fix_camera = True
 
         self.setup_shader()
         self.run()
@@ -69,9 +74,11 @@ class Window:
     def run(self):
 
         self.num_frames = 0
+        self.global_time = time.time()
 
         running = True
         while running:
+            self.global_time = time.time()
 
             # Poll events
             for event in pg.event.get():
@@ -82,8 +89,11 @@ class Window:
                 running = False
 
             # Handle input
-            self.handle_keyboard()
-            self.handle_mouse()
+            if self.fix_camera:
+                self.animate_camera()
+            else:
+                self.handle_keyboard()
+                self.handle_mouse()
 
             # Refresh screen
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)
@@ -120,7 +130,7 @@ class Window:
 
             # Timing
             self.dt = self.clock.tick(60)
-            pg.display.set_caption(f'FPS: {int(self.clock.get_fps())}')
+            pg.display.set_caption(f'FPS: {int(self.clock.get_fps())} | Balls: {self.num_balls}')
             self.num_frames += 1
 
         self.quit()
@@ -202,6 +212,25 @@ class Window:
         self.modelMatrixLocationOutline = glGetUniformLocation(self.outline_shader.shader_id, "model")
         self.viewMatrixLocationOutline = glGetUniformLocation(self.outline_shader.shader_id, "view")
         self.outline_shader.detach()
+
+    def animate_camera(self):
+        keys = pg.key.get_pressed()
+        if keys[pg.K_w]:
+            self.camera_radius -= 0.1
+        if keys[pg.K_s]:
+            self.camera_radius += 0.1
+
+        x = np.cos(np.deg2rad(self.global_time * self.camera_speed))
+        z = np.sin(np.deg2rad(self.global_time * self.camera_speed))
+        self.camera.position[0] = x * self.camera_radius
+        self.camera.position[2] = z * self.camera_radius
+        self.camera.yaw = self.global_time * self.camera_speed + 180
+
+        # height = 3
+        # oscillation_speed = 10
+        # y = np.cos(np.deg2rad(self.global_time * oscillation_speed))
+        # self.camera.position[1] = y * height
+        # self.camera.pitch = -y * oscillation_speed / height
 
 
 if __name__ == '__main__':

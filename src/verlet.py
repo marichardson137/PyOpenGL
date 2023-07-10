@@ -17,17 +17,33 @@ class Solver:
     gravity = np.array([0.0, -1000, 0.0])
     damping = 0.8
 
+    grid_size = 8
+
     def __init__(self, container, verlet_objects=[]):
         self.container = container
         self.verlet_objects = verlet_objects
+        self.grid = np.empty((Solver.grid_size, Solver.grid_size, Solver.grid_size), dtype=object)
+        self.grid.fill([])
 
     def update(self):
         sub_dt = Solver.time_step / Solver.sub_steps
         for step in range(Solver.sub_steps):
             self.apply_forces()
-            self.check_collisions()
+            self.update_grid()
+            self.evaluate_grid()
             self.apply_constraints()
             self.update_positions(sub_dt)
+
+    def update_grid(self):
+        for x in range(1, Solver.grid_size - 1):
+            for y in range(1, Solver.grid_size - 1):
+                for z in range(1, Solver.grid_size - 1):
+                    self.grid[x][y][z] = []
+        for obj in self.verlet_objects:
+            grid_x = int((obj.pos_curr[0] + 4) * 8 / Solver.grid_size)
+            grid_y = int((obj.pos_curr[1] + 4) * 8 / Solver.grid_size)
+            grid_z = int((obj.pos_curr[2] + 4) * 8 / Solver.grid_size)
+            self.grid[grid_x][grid_y][grid_z].append(obj)
 
     def update_positions(self, dt):
         for obj in self.verlet_objects:
@@ -40,18 +56,38 @@ class Solver:
         for obj in self.verlet_objects:
             obj.acceleration += Solver.gravity
 
-    def check_collisions(self):
+    def evaluate_grid(self):
+        for x in range(1, Solver.grid_size - 1):
+            for y in range(1, Solver.grid_size - 1):
+                for z in range(1, Solver.grid_size - 1):
+                    curr_cell = self.grid[x][y][z]
+                    for dx in range(-1, 2):
+                        for dy in range(-1, 2):
+                            for dz in range(-1, 2):
+                                other_cell = self.grid[x + dx][y + dy][z + dz]
+                                self.check_cell_collisions(curr_cell, other_cell)
+
+    def check_cell_collisions(self, c1, c2):
+        for a in c1:
+            for b in c2:
+                if a is not b:
+                    self.handle_collision(a, b)
+
+    def handle_collision(self, a, b):
+        axis = a.pos_curr - b.pos_curr
+        dist = np.sqrt(axis.dot(axis))
+        if dist == 0:
+            return
+        if dist < a.radius + b.radius:
+            n = axis / dist
+            delta = a.radius + b.radius - dist
+            a.pos_curr += 0.5 * delta * n
+            b.pos_curr -= 0.5 * delta * n
+
+    def brute_collisions(self):
         for a in self.verlet_objects:
             for b in self.verlet_objects:
-                axis = a.pos_curr - b.pos_curr
-                dist = np.sqrt(axis.dot(axis))
-                if dist == 0:
-                    continue
-                if dist < a.radius + b.radius:
-                    n = axis / dist
-                    delta = a.radius + b.radius - dist
-                    a.pos_curr += 0.5 * delta * n
-                    b.pos_curr -= 0.5 * delta * n
+                self.handle_collision(a, b)
 
     def apply_constraints(self):
         # Floor
@@ -84,3 +120,6 @@ class Solver:
         #             disp = obj.pos_curr[i] - obj.pos_old[i]
         #             obj.pos_curr[i] = dim
         #             obj.pos_old[i] = obj.pos_curr[i] + disp
+
+    def add_object(self, obj):
+        self.verlet_objects.append(obj)

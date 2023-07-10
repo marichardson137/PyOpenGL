@@ -65,7 +65,8 @@ class Window:
 
         self.camera_radius = 12
         self.camera_speed = 8
-        self.camera = Camera(position=(0, 0, self.camera_radius))
+        self.camera = Camera(position=(0, 3, self.camera_radius))
+        self.camera.pitch = -15
         self.fix_camera = True
 
         self.setup_shader()
@@ -114,7 +115,7 @@ class Window:
             if self.num_frames >= 15:
                 x = np.cos(np.deg2rad(360 * np.random.rand()))
                 y = np.sin(np.deg2rad(360 * np.random.rand()))
-                self.solver.verlet_objects.append(VerletObject(position=(x * 2.5, 0, y * 2.5), radius=0.15))
+                self.solver.add_object(VerletObject(position=(x * 2.5, 0, y * 2.5), radius=0.15))
 
                 self.num_balls += 1
                 self.num_frames = 0

@@ -17,9 +17,9 @@ class Window:
     WIDTH = 1400
     HEIGHT = 900
 
-    GLOBAL_X = np.array([1, 0, 0], dtype=np.float64)
-    GLOBAL_Y = np.array([0, 1, 0], dtype=np.float64)
-    GLOBAL_Z = np.array([0, 0, 1], dtype=np.float64)
+    GLOBAL_X = np.array([1, 0, 0], dtype=np.float32)
+    GLOBAL_Y = np.array([0, 1, 0], dtype=np.float32)
+    GLOBAL_Z = np.array([0, 0, 1], dtype=np.float32)
 
     def __init__(self):
 
@@ -62,12 +62,14 @@ class Window:
         self.solver = Solver(self.container)
         self.sphere_mesh = Mesh("models/ico_sphere.obj")
         self.cube_mesh = Mesh("models/cube.obj")
+        self.cyl_mesh = Mesh("models/cylinder.obj")
+
 
         self.camera_radius = 12
         self.camera_speed = 8
         self.camera = Camera(position=(0, 3, self.camera_radius))
         self.camera.pitch = -14
-        self.fix_camera = True
+        self.fix_camera = False
 
         self.setup_shader()
         self.run()
@@ -79,16 +81,17 @@ class Window:
 
         # Add links
         ps = [
-            (0, 1, 0), (0, -1, 0), (1, 0, 1), (-1, 0, -1), (1, 0, -1), (-1, 0, 1)
+            (1, 1, 1), (1, 1, -1), (-1, 1, 1), (-1, 1, -1),
+            # (1, 0, 1), (1, 0, -1), (-1, 0, 1), (-1, 0, -1)
         ]
         vs = []
         for p in ps:
             v = VerletObject(position=p, radius=0.15)
             self.solver.add_object(v)
             vs.append(v)
-        for i in range(1, len(vs)):
+        for i in range(0, len(vs) - 1):
             for j in range(i + 1, len(vs)):
-                self.solver.add_link(0.4, vs[i], vs[j])
+                self.solver.add_link(0.5, vs[i], vs[j])
 
         running = True
         while running:
@@ -140,6 +143,30 @@ class Window:
             for verlet in self.solver.verlet_objects:
                 draw_mesh(self.shader, self.sphere_mesh, self.modelMatrixLocation, verlet.pos_curr, scale=verlet.radius)
 
+            for link in self.solver.links:
+                disp = link.a.pos_curr - link.b.pos_curr
+                dist = np.sqrt(disp.dot(disp))
+                n = disp / dist
+                center = link.b.pos_curr + n * 0.5 * dist
+
+                XD, ZD, YD = n
+                XU, ZU, YU = Window.GLOBAL_Y
+
+                h = np.array((XD, YD, 0), dtype=np.float32)
+                angle_h = np.arctan2(YD, XD)
+                angle_p = np.arcsin(ZD)
+
+                W0 = np.array((-YD, XD, 0), dtype=np.float32)
+                U0 = np.cross(W0, n)
+
+                ax = np.dot(W0, Window.GLOBAL_Y)
+                ay = np.dot(U0, Window.GLOBAL_Y)
+
+                angle_b = np.arctan2(ax / np.linalg.norm(W0), ay / np.linalg.norm(U0))
+
+                draw_mesh(self.shader, self.cyl_mesh, self.modelMatrixLocation, center,
+                          rotation=(np.degrees(angle_b), np.degrees(angle_h), np.degrees(angle_p)), scale=0.2)
+
             pg.display.flip()
 
             # Timing
@@ -182,6 +209,7 @@ class Window:
     def quit(self):
         self.sphere_mesh.destroy()
         self.cube_mesh.destroy()
+        self.cyl_mesh.destroy()
         # self.texture.destroy()
         self.shader.destroy()
         self.outline_shader.destroy()

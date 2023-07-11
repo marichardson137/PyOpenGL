@@ -53,7 +53,6 @@ class Window:
         # glStencilFunc(GL_NOTEQUAL, 1, 0xFF)
         # glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE)
 
-
         self.font = pg.font.Font("assets/Monocode.ttf", 30)
 
         self.num_balls = 0
@@ -77,6 +76,19 @@ class Window:
 
         self.num_frames = 0
         self.global_time = time.time()
+
+        # Add links
+        ps = [
+            (0, 1, 0), (0, -1, 0), (1, 0, 1), (-1, 0, -1), (1, 0, -1), (-1, 0, 1)
+        ]
+        vs = []
+        for p in ps:
+            v = VerletObject(position=p, radius=0.15)
+            self.solver.add_object(v)
+            vs.append(v)
+        for i in range(1, len(vs)):
+            for j in range(i + 1, len(vs)):
+                self.solver.add_link(0.4, vs[i], vs[j])
 
         running = True
         while running:
@@ -113,7 +125,7 @@ class Window:
                       self.container.position, scale=self.container.scale, method=GL_POINTS)
 
             # Add balls to the simulation
-            if self.num_frames >= 3 and self.num_balls < 100:
+            if self.num_frames >= 3 and self.num_balls < 0:
                 x = np.cos(np.deg2rad(360 * np.random.rand()))
                 y = np.sin(np.deg2rad(360 * np.random.rand()))
                 self.solver.add_object(VerletObject(position=(x * 2.5, 0, y * 2.5), radius=0.15))

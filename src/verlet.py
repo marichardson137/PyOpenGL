@@ -9,6 +9,21 @@ class VerletObject:
         self.acceleration = np.zeros(3)
         self.radius = radius
 
+class Link:
+
+    def __init__(self, obj_1, obj_2, target):
+        self.a = obj_1
+        self.b = obj_2
+        self.target = target
+
+    def apply(self):
+        disp = self.a.pos_curr - self.b.pos_curr
+        dist = np.sqrt(disp.dot(disp))
+        n = disp / dist
+        delta = self.target - dist
+        self.a.pos_curr += 0.5 * delta * n
+        self.b.pos_curr -= 0.5 * delta * n
+
 
 class Solver:
     time_step = 0.0015
@@ -24,15 +39,18 @@ class Solver:
         self.verlet_objects = verlet_objects
         self.grid = np.empty((Solver.grid_size, Solver.grid_size, Solver.grid_size), dtype=object)
         self.grid.fill([])
+        self.links = []
 
     def update(self):
         sub_dt = Solver.time_step / Solver.sub_steps
         for step in range(Solver.sub_steps):
             self.apply_forces()
-            self.update_grid()
-            self.evaluate_grid()
+            # self.update_grid()
+            # self.evaluate_grid()
+            self.brute_collisions()
             self.apply_constraints()
             self.update_positions(sub_dt)
+            self.update_links()
 
     def update_grid(self):
         for x in range(Solver.grid_size):
@@ -123,5 +141,13 @@ class Solver:
         #             obj.pos_curr[i] = dim
         #             obj.pos_old[i] = obj.pos_curr[i] + disp
 
+    def update_links(self):
+        for link in self.links:
+            link.apply()
+
     def add_object(self, obj):
         self.verlet_objects.append(obj)
+
+    def add_link(self, target, obj_a, obj_b):
+        link = Link(obj_a, obj_b, target)
+        self.links.append(link)

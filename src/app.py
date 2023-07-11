@@ -149,23 +149,19 @@ class Window:
                 n = disp / dist
                 center = link.b.pos_curr + n * 0.5 * dist
 
-                XD, ZD, YD = n
-                XU, ZU, YU = Window.GLOBAL_Y
+                direction_vector = n
+                up_vector = Window.GLOBAL_Y
 
-                h = np.array((XD, YD, 0), dtype=np.float32)
-                angle_h = np.arctan2(YD, XD)
-                angle_p = np.arcsin(ZD)
+                direction_vector = direction_vector / np.linalg.norm(direction_vector)  # Normalize direction vector
+                right_vector = np.cross(up_vector, direction_vector)
+                right_vector /= np.linalg.norm(right_vector)  # Normalize right vector
+                new_up_vector = np.cross(direction_vector, right_vector)
 
-                W0 = np.array((-YD, XD, 0), dtype=np.float32)
-                U0 = np.cross(W0, n)
-
-                ax = np.dot(W0, Window.GLOBAL_Y)
-                ay = np.dot(U0, Window.GLOBAL_Y)
-
-                angle_b = np.arctan2(ax / np.linalg.norm(W0), ay / np.linalg.norm(U0))
-
+                yaw = np.arctan2(right_vector[2], right_vector[0])
+                pitch = np.arcsin(-direction_vector[1])
+                roll = np.arctan2(new_up_vector[1], new_up_vector[0])
                 draw_mesh(self.shader, self.cyl_mesh, self.modelMatrixLocation, center,
-                          rotation=(np.degrees(angle_b), np.degrees(angle_h), np.degrees(angle_p)), scale=0.2)
+                          rotation=(np.degrees(roll), np.degrees(yaw), np.degrees(pitch)), scale=0.2)
 
             pg.display.flip()
 

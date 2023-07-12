@@ -64,12 +64,11 @@ class Window:
         self.cube_mesh = Mesh("models/cube.obj")
         self.cyl_mesh = Mesh("models/cylinder.obj")
 
-
         self.camera_radius = 12
         self.camera_speed = 8
         self.camera = Camera(position=(0, 3, self.camera_radius))
         self.camera.pitch = -14
-        self.fix_camera = False
+        self.fix_camera = True
 
         self.setup_shader()
         self.run()
@@ -81,17 +80,17 @@ class Window:
 
         # Add links
         ps = [
-            (1, 1, 1), (1, 1, -1), (-1, 1, 1), (-1, 1, -1),
+            (2, 1, 1), (2, 0, -1), (1, 1, 1), (1, 1, -1),
             # (1, 0, 1), (1, 0, -1), (-1, 0, 1), (-1, 0, -1)
         ]
         vs = []
         for p in ps:
-            v = VerletObject(position=p, radius=0.15)
+            v = VerletObject(position=p, radius=0.3)
             self.solver.add_object(v)
             vs.append(v)
         for i in range(0, len(vs) - 1):
             for j in range(i + 1, len(vs)):
-                self.solver.add_link(0.5, vs[i], vs[j])
+                self.solver.add_link(1, vs[i], vs[j])
 
         running = True
         while running:
@@ -128,10 +127,10 @@ class Window:
                       self.container.position, scale=self.container.scale, method=GL_POINTS)
 
             # Add balls to the simulation
-            if self.num_frames >= 3 and self.num_balls < 0:
+            if self.num_frames >= 60 and self.num_balls < 40:
                 x = np.cos(np.deg2rad(360 * np.random.rand()))
                 y = np.sin(np.deg2rad(360 * np.random.rand()))
-                self.solver.add_object(VerletObject(position=(x * 2.5, 0, y * 2.5), radius=0.15))
+                self.solver.add_object(VerletObject(position=(x * 2.5, 0, y * 2.5), radius=0.35))
 
                 self.num_balls += 1
                 self.num_frames = 0
@@ -149,19 +148,19 @@ class Window:
                 n = disp / dist
                 center = link.b.pos_curr + n * 0.5 * dist
 
-                direction_vector = n
+                direction_vector = n / np.linalg.norm(n)
                 up_vector = Window.GLOBAL_Y
 
-                direction_vector = direction_vector / np.linalg.norm(direction_vector)  # Normalize direction vector
                 right_vector = np.cross(up_vector, direction_vector)
-                right_vector /= np.linalg.norm(right_vector)  # Normalize right vector
-                new_up_vector = np.cross(direction_vector, right_vector)
+                right_vector /= np.linalg.norm(right_vector)
+                new_up_vector = np.cross(right_vector, direction_vector)
+                new_up_vector /= np.linalg.norm(new_up_vector)
 
-                yaw = np.arctan2(right_vector[2], right_vector[0])
-                pitch = np.arcsin(-direction_vector[1])
-                roll = np.arctan2(new_up_vector[1], new_up_vector[0])
+                # rotation_quaternion = pyrr.Quaternion.from_matrix()
+                rotation_matrix = np.array([right_vector, new_up_vector, -direction_vector], dtype=np.float32)
+
                 draw_mesh(self.shader, self.cyl_mesh, self.modelMatrixLocation, center,
-                          rotation=(np.degrees(roll), np.degrees(yaw), np.degrees(pitch)), scale=0.2)
+                          rotation_matrix=rotation_matrix, scale=0.4)
 
             pg.display.flip()
 

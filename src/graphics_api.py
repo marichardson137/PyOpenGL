@@ -3,7 +3,7 @@ import pyrr
 from OpenGL.GL import *
 
 
-def draw_mesh(shader, mesh, model_location, position, rotation=(0, 0, 0), scale=1, method=GL_TRIANGLES):
+def draw_mesh(shader, mesh, model_location, position, rotation=(0, 0, 0), rotation_matrix=None, scale=1, method=GL_TRIANGLES):
     position = np.array(position, dtype=np.float32)
     rotation = np.array(rotation, dtype=np.float32)
     scale = np.array([scale] * 3, dtype=np.float32)
@@ -12,17 +12,25 @@ def draw_mesh(shader, mesh, model_location, position, rotation=(0, 0, 0), scale=
         m1=model,
         m2=pyrr.matrix44.create_from_scale(scale)
     )
-    model = pyrr.matrix44.multiply(
-        m1=model,
-        m2=pyrr.matrix44.create_from_eulers(
-            eulers=np.radians(rotation),
-            dtype=np.float32
+
+    if rotation_matrix is None:
+        model = pyrr.matrix44.multiply(
+            m1=model,
+            m2=pyrr.matrix44.create_from_eulers(
+                eulers=rotation,
+                dtype=np.float32
+            )
         )
-    )
+    else:
+        model = pyrr.matrix44.multiply(
+            m1=model,
+            m2=pyrr.matrix44.create_from_matrix33(rotation_matrix)
+        )
+
     model = pyrr.matrix44.multiply(
         m1=model,
         m2=pyrr.matrix44.create_from_translation(
-            vec=np.array(position),
+            vec=position,
             dtype=np.float32
         )
     )

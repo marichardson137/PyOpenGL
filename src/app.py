@@ -78,10 +78,16 @@ class Window:
         self.num_frames = 0
         self.global_time = time.time()
 
+        theta = 54.75
+        d = 0.7
+
         # Add links
         ps = [
             # (2, 1, 1), (2, 0, -1), (1, 1, 1), (1, 1, -1),
-            (0, 0, 0), (0, 0, 0), (0, 0, 0), (0, 0, 0)
+            (d * np.sin(theta), d * np.cos(theta), 0),
+            (-d * np.sin(theta), d * np.cos(theta), 0),
+            (0, -d * np.cos(theta), -d * np.sin(theta)),
+            (0, -d * np.cos(theta), d * np.sin(theta))
         ]
         vs = []
         for p in ps:
@@ -90,7 +96,7 @@ class Window:
             vs.append(v)
         for i in range(0, len(vs) - 1):
             for j in range(i + 1, len(vs)):
-                self.solver.add_link(1, vs[i], vs[j])
+                self.solver.add_link(d, vs[i], vs[j])
 
         running = True
         while running:
@@ -142,6 +148,7 @@ class Window:
             for verlet in self.solver.verlet_objects:
                 draw_mesh(self.shader, self.sphere_mesh, self.modelMatrixLocation, verlet.pos_curr, scale=verlet.radius)
 
+            # Render the links
             for link in self.solver.links:
                 disp = link.a.pos_curr - link.b.pos_curr
                 dist = np.sqrt(disp.dot(disp))
@@ -156,11 +163,10 @@ class Window:
                 new_up_vector = np.cross(right_vector, direction_vector)
                 new_up_vector /= np.linalg.norm(new_up_vector)
 
-                # rotation_quaternion = pyrr.Quaternion.from_matrix()
                 rotation_matrix = np.array([right_vector, new_up_vector, -direction_vector], dtype=np.float32)
 
                 draw_mesh(self.shader, self.cyl_mesh, self.modelMatrixLocation, center,
-                          rotation_matrix=rotation_matrix, scale=0.4)
+                          rotation_matrix=rotation_matrix, scale=d)
 
             pg.display.flip()
 

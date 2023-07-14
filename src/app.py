@@ -128,13 +128,25 @@ class Window:
                       self.container.position, scale=self.container.scale, method=GL_POINTS)
 
             # Add balls to the simulation
-            if self.num_frames >= 60 and self.num_balls < 0:
+            if self.num_frames >= 20 and self.num_balls < 20:
                 x = np.cos(np.deg2rad(360 * np.random.rand()))
                 y = np.sin(np.deg2rad(360 * np.random.rand()))
                 self.solver.add_object(VerletObject(position=(x * 2.5, 0, y * 2.5), radius=0.1))
 
                 self.num_balls += 1
                 self.num_frames = 0
+
+            # Update our pressure circle
+            center = np.zeros(3, dtype=np.float32)
+            for obj in vs:
+                center += obj.pos_curr
+            center /= 36
+            for obj in vs:
+                disp = obj.pos_curr - center
+                dist = np.sqrt(disp.dot(disp))
+                n = disp / dist
+                delta = 2.5 - dist
+                obj.acceleration += n * delta * 1000
 
             # Update the positions of all the balls
             self.solver.update()
@@ -163,6 +175,7 @@ class Window:
                 draw_mesh(self.shader, self.cyl_mesh, self.modelMatrixLocation, center,
                           rotation_matrix=rotation_matrix, scale=0.15)
 
+            # Display the loaded buffer
             pg.display.flip()
 
             # Timing

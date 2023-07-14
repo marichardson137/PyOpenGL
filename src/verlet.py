@@ -27,7 +27,7 @@ class Link:
 
 class Solver:
     time_step = 0.0015
-    sub_steps = 2
+    sub_steps = 1
 
     gravity = np.array([0.0, -1000, 0.0])
     damping = 0.8
@@ -75,6 +75,7 @@ class Solver:
     def apply_forces(self):
         for obj in self.verlet_objects:
             obj.acceleration += Solver.gravity
+
 
     def evaluate_grid(self):
         for x in range(1, Solver.grid_size - 1):

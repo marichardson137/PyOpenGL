@@ -78,7 +78,7 @@ class Window:
         self.num_frames = 0
         self.global_time = time.time()
 
-        circ_num = 18
+        circ_num = 36
         r = 2
 
         # Add links
@@ -87,11 +87,11 @@ class Window:
         ]
         vs = []
         for p in ps:
-            v = VerletObject(position=p, radius=0.2)
+            v = VerletObject(position=p, radius=0.1)
             self.solver.add_object(v)
             vs.append(v)
-        for i in range(0, len(vs) - 1):
-            self.solver.add_link(2, vs[i], vs[i+1])
+        for i in range(-1, len(vs) - 1):
+            self.solver.add_link(2 * r * np.sin(np.pi / circ_num / 2), vs[i], vs[i+1])
 
         running = True
         while running:
@@ -128,10 +128,10 @@ class Window:
                       self.container.position, scale=self.container.scale, method=GL_POINTS)
 
             # Add balls to the simulation
-            if self.num_frames >= 60 and self.num_balls < 40:
+            if self.num_frames >= 60 and self.num_balls < 0:
                 x = np.cos(np.deg2rad(360 * np.random.rand()))
                 y = np.sin(np.deg2rad(360 * np.random.rand()))
-                self.solver.add_object(VerletObject(position=(x * 2.5, 0, y * 2.5), radius=0.2))
+                self.solver.add_object(VerletObject(position=(x * 2.5, 0, y * 2.5), radius=0.1))
 
                 self.num_balls += 1
                 self.num_frames = 0
@@ -161,7 +161,7 @@ class Window:
                 rotation_matrix = np.array([right_vector, new_up_vector, -direction_vector], dtype=np.float32)
 
                 draw_mesh(self.shader, self.cyl_mesh, self.modelMatrixLocation, center,
-                          rotation_matrix=rotation_matrix, scale=0.25)
+                          rotation_matrix=rotation_matrix, scale=0.15)
 
             pg.display.flip()
 

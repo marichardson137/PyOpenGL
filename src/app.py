@@ -91,8 +91,7 @@ class Window:
             self.solver.add_object(v)
             vs.append(v)
         for i in range(0, len(vs) - 1):
-            for j in range(i + 1, len(vs)):
-                self.solver.add_link(2, vs[i], vs[j])
+            self.solver.add_link(2, vs[i], vs[i+1])
 
         running = True
         while running:

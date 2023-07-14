@@ -92,7 +92,7 @@ class Window:
             vs.append(v)
         for i in range(0, len(vs) - 1):
             for j in range(i + 1, len(vs)):
-                self.solver.add_link(0.2, vs[i], vs[j])
+                self.solver.add_link(2, vs[i], vs[j])
 
         running = True
         while running:

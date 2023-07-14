@@ -78,25 +78,21 @@ class Window:
         self.num_frames = 0
         self.global_time = time.time()
 
-        theta = 54.75
-        d = 0.7
+        circ_num = 18
+        r = 2
 
         # Add links
         ps = [
-            # (2, 1, 1), (2, 0, -1), (1, 1, 1), (1, 1, -1),
-            (d * np.sin(theta), d * np.cos(theta), 0),
-            (-d * np.sin(theta), d * np.cos(theta), 0),
-            (0, -d * np.cos(theta), -d * np.sin(theta)),
-            (0, -d * np.cos(theta), d * np.sin(theta))
+            (r * np.sin(2 * np.pi / i), 0, r * np.cos(2 * np.pi / i)) for i in range(1, circ_num + 1)
         ]
         vs = []
         for p in ps:
-            v = VerletObject(position=p, radius=0.3)
+            v = VerletObject(position=p, radius=0.2)
             self.solver.add_object(v)
             vs.append(v)
         for i in range(0, len(vs) - 1):
             for j in range(i + 1, len(vs)):
-                self.solver.add_link(d, vs[i], vs[j])
+                self.solver.add_link(0.2, vs[i], vs[j])
 
         running = True
         while running:
@@ -136,7 +132,7 @@ class Window:
             if self.num_frames >= 60 and self.num_balls < 40:
                 x = np.cos(np.deg2rad(360 * np.random.rand()))
                 y = np.sin(np.deg2rad(360 * np.random.rand()))
-                self.solver.add_object(VerletObject(position=(x * 2.5, 0, y * 2.5), radius=0.35))
+                self.solver.add_object(VerletObject(position=(x * 2.5, 0, y * 2.5), radius=0.2))
 
                 self.num_balls += 1
                 self.num_frames = 0
@@ -166,13 +162,13 @@ class Window:
                 rotation_matrix = np.array([right_vector, new_up_vector, -direction_vector], dtype=np.float32)
 
                 draw_mesh(self.shader, self.cyl_mesh, self.modelMatrixLocation, center,
-                          rotation_matrix=rotation_matrix, scale=d)
+                          rotation_matrix=rotation_matrix, scale=0.25)
 
             pg.display.flip()
 
             # Timing
             self.dt = self.clock.tick(60)
-            pg.display.set_caption(f'FPS: {int(self.clock.get_fps())} | Balls: {self.num_balls}')
+            pg.display.set_caption(f'FPS: {int(self.clock.get_fps())} | Balls: {len(self.solver.verlet_objects)}')
             self.num_frames += 1
 
         self.quit()

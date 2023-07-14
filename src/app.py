@@ -79,7 +79,7 @@ class Window:
         self.global_time = time.time()
 
         circ_num = 36
-        r = 2
+        r = 2.5
 
         # Add links
         ps = [

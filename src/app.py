@@ -7,10 +7,15 @@ import numpy as np
 import pyrr
 
 from src.camera import Camera
-from src.graphics_api import draw_mesh
+from src.graphics_api import draw_mesh, create_icosphere
 from src.model import Model, Texture, Mesh
 from src.shader import Shader
 from src.verlet import VerletObject, Solver
+
+
+def distance(point1, point2):
+    distance = np.sqrt((point2[0] - point1[0])**2 + (point2[1] - point1[1])**2 + (point2[2] - point1[2])**2)
+    return distance
 
 
 class Window:
@@ -93,6 +98,28 @@ class Window:
         for i in range(-1, len(vs) - 1):
             self.solver.add_link(2 * r * np.sin(np.pi / circ_num / 2), vs[i], vs[i + 1])
 
+        # Generate Icosphere
+        ico_radius = 1
+        ico_recursion = 0
+        ico_positions = create_icosphere(ico_radius, ico_recursion)
+
+        # Build the Icosphere
+        ico_vs = []
+        for pos in ico_positions:
+            v = VerletObject(position=pos, radius=0.22)
+            self.solver.add_object(v)
+            ico_vs.append(v)
+
+        for i, pos in enumerate(ico_positions):
+            # Calculate distances to all other vertices and sort them
+            distances = [(j, distance(pos, ico_positions[j])) for j in range(len(ico_positions))]
+            distances.sort(key=lambda x: x[1])
+
+            # Connect to the six nearest neighbors
+            for j in range(1, 6):
+                neighbor_index = distances[j][0]
+                self.solver.add_link(distances[j][1], ico_vs[i], ico_vs[neighbor_index])
+
         running = True
         while running:
             self.global_time = time.time()
@@ -129,7 +156,7 @@ class Window:
                       self.container.position, scale=self.container.scale, method=GL_POINTS)
 
             # Add balls to the simulation
-            if self.num_frames >= 0 and self.num_balls < 100:
+            if self.num_frames >= 0 and self.num_balls < 0:
                 x = np.cos(np.deg2rad(360 * np.random.rand()))
                 y = np.sin(np.deg2rad(360 * np.random.rand()))
                 self.solver.add_object(VerletObject(position=(x * 2.5, 0, y * 2.5), radius=0.1))
@@ -137,17 +164,17 @@ class Window:
                 self.num_balls += 1
                 self.num_frames = 0
 
-            # Update our pressure circle
+            # Update our pressure icosphere
             center = np.zeros(3, dtype=np.float32)
-            for obj in vs:
+            for obj in ico_vs:
                 center += obj.pos_curr
-            center /= 36
-            for obj in vs:
+            center /= len(ico_positions)
+            for obj in ico_vs:
                 disp = obj.pos_curr - center
                 dist = np.sqrt(disp.dot(disp))
                 n = disp / dist
-                delta = 2.5 - dist
-                obj.acceleration += n * delta * 2000
+                delta = ico_radius - dist
+                obj.acceleration += n * delta * 500
 
             # Update the positions of all the balls
             self.solver.update()
@@ -174,7 +201,7 @@ class Window:
                 rotation_matrix = np.array([right_vector, new_up_vector, -direction_vector], dtype=np.float32)
 
                 draw_mesh(self.shader, self.cyl_mesh, self.modelMatrixLocation, center,
-                          rotation_matrix=rotation_matrix, scale=0.15)
+                          rotation_matrix=rotation_matrix, scale=0.4)
 
             # Display the next buffer
             pg.display.flip()
@@ -192,8 +219,7 @@ class Window:
         if keys[pg.K_g]:
             # self.solver.expanding_force(np.array([0, -4, 0]), 8000)
             # self.solver.expanding_force(np.array([0, 4, 0]), 8000)
-            self.solver.expanding_force(np.array([0, 2, 0]), -3000)
-            self.solver.expanding_force(np.array([0, -2, 0]), -3000)
+            self.solver.expanding_force(np.array([0, 2, 0]), -2500)
 
 
 

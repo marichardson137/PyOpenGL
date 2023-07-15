@@ -14,25 +14,28 @@ class VerletObject:
 
 class Link:
 
-    def __init__(self, obj_1, obj_2, target):
-        self.a = obj_1
-        self.b = obj_2
+    def __init__(self, a, b, target):
+        self.a = a
+        self.b = b
         self.target = target
 
     def apply(self):
         disp = self.a.pos_curr - self.b.pos_curr
         dist = np.sqrt(disp.dot(disp))
-        n = disp / dist
-        delta = self.target - dist
-        self.a.pos_curr += 0.5 * delta * n
-        self.b.pos_curr -= 0.5 * delta * n
+        if dist != 0:
+            n = disp / dist
+            delta = self.target - dist
+            # self.a.pos_curr += 0.5 * delta * n
+            # self.b.pos_curr -= 0.5 * delta * n
 
 
 class Solver:
     time_step = 0.0015
     sub_steps = 1
 
-    gravity = np.array([0.0, -1000, 0.0])  # -1000
+    gravity = np.array([0.0, 0, 0.0])
+    # gravity = np.array([0.0, -1000, 0.0])  # -1000
+
     friction = -100
 
     grid_size = 10

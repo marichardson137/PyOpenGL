@@ -99,14 +99,14 @@ class Window:
             self.solver.add_link(2 * r * np.sin(np.pi / circ_num / 2), vs[i], vs[i + 1])
 
         # Generate Icosphere
-        ico_radius = 1
-        ico_recursion = 0
+        ico_radius = 2
+        ico_recursion = 1
         ico_positions = create_icosphere(ico_radius, ico_recursion)
 
         # Build the Icosphere
         ico_vs = []
         for pos in ico_positions:
-            v = VerletObject(position=pos, radius=0.22)
+            v = VerletObject(position=pos, radius=0.2)
             self.solver.add_object(v)
             ico_vs.append(v)
 
@@ -116,7 +116,7 @@ class Window:
             distances.sort(key=lambda x: x[1])
 
             # Connect to the six nearest neighbors
-            for j in range(1, 6):
+            for j in range(1, 7):
                 neighbor_index = distances[j][0]
                 self.solver.add_link(distances[j][1], ico_vs[i], ico_vs[neighbor_index])
 
@@ -174,7 +174,7 @@ class Window:
                 dist = np.sqrt(disp.dot(disp))
                 n = disp / dist
                 delta = ico_radius - dist
-                obj.acceleration += n * delta * 500
+                obj.acceleration += n * delta * 0
 
             # Update the positions of all the balls
             self.solver.update()
@@ -187,21 +187,23 @@ class Window:
             for link in self.solver.links:
                 disp = link.a.pos_curr - link.b.pos_curr
                 dist = np.sqrt(disp.dot(disp))
-                n = disp / dist
-                center = link.b.pos_curr + n * 0.5 * dist
+                if dist != 0:
 
-                direction_vector = n / np.linalg.norm(n)
-                up_vector = Window.GLOBAL_Y
+                    n = disp / dist
+                    center = link.b.pos_curr + n * 0.5 * dist
 
-                right_vector = np.cross(up_vector, direction_vector)
-                right_vector /= np.linalg.norm(right_vector)
-                new_up_vector = np.cross(right_vector, direction_vector)
-                new_up_vector /= np.linalg.norm(new_up_vector)
+                    direction_vector = n / np.linalg.norm(n)
+                    up_vector = Window.GLOBAL_Y
 
-                rotation_matrix = np.array([right_vector, new_up_vector, -direction_vector], dtype=np.float32)
+                    right_vector = np.cross(up_vector, direction_vector)
+                    right_vector /= np.linalg.norm(right_vector)
+                    new_up_vector = np.cross(right_vector, direction_vector)
+                    new_up_vector /= np.linalg.norm(new_up_vector)
 
-                draw_mesh(self.shader, self.cyl_mesh, self.modelMatrixLocation, center,
-                          rotation_matrix=rotation_matrix, scale=0.4)
+                    rotation_matrix = np.array([right_vector, new_up_vector, -direction_vector], dtype=np.float32)
+
+                    draw_mesh(self.shader, self.cyl_mesh, self.modelMatrixLocation, center,
+                              rotation_matrix=rotation_matrix, scale=0.4)
 
             # Display the next buffer
             pg.display.flip()
@@ -220,8 +222,6 @@ class Window:
             # self.solver.expanding_force(np.array([0, -4, 0]), 8000)
             # self.solver.expanding_force(np.array([0, 4, 0]), 8000)
             self.solver.expanding_force(np.array([0, 2, 0]), -2500)
-
-
 
         # Camera
         if not self.fix_camera:

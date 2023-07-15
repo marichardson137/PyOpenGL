@@ -68,7 +68,7 @@ class Window:
         self.camera_speed = 8
         self.camera = Camera(position=(0, 3, self.camera_radius))
         self.camera.pitch = -14
-        self.fix_camera = False
+        self.fix_camera = True
 
         self.setup_shader()
         self.run()
@@ -91,7 +91,7 @@ class Window:
             self.solver.add_object(v)
             vs.append(v)
         for i in range(-1, len(vs) - 1):
-            self.solver.add_link(2 * r * np.sin(np.pi / circ_num / 2), vs[i], vs[i+1])
+            self.solver.add_link(2 * r * np.sin(np.pi / circ_num / 2), vs[i], vs[i + 1])
 
         running = True
         while running:
@@ -105,17 +105,18 @@ class Window:
             if pg.key.get_pressed()[pg.K_ESCAPE]:
                 running = False
 
-            # Handle input
+            # Lock camera
             if self.fix_camera:
                 self.animate_camera()
-            else:
-                self.handle_keyboard()
-                self.handle_mouse()
+
+            # Handle input
+            self.handle_keyboard()
+            self.handle_mouse()
 
             # Refresh screen
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)
 
-            # Update camera
+            # Update view matrix
             self.shader.use()
             self.camera.update_view(self.viewMatrixLocation)
             self.shader.detach()
@@ -128,7 +129,7 @@ class Window:
                       self.container.position, scale=self.container.scale, method=GL_POINTS)
 
             # Add balls to the simulation
-            if self.num_frames >= 60 and self.num_balls < 50:
+            if self.num_frames >= 0 and self.num_balls < 100:
                 x = np.cos(np.deg2rad(360 * np.random.rand()))
                 y = np.sin(np.deg2rad(360 * np.random.rand()))
                 self.solver.add_object(VerletObject(position=(x * 2.5, 0, y * 2.5), radius=0.1))
@@ -146,7 +147,7 @@ class Window:
                 dist = np.sqrt(disp.dot(disp))
                 n = disp / dist
                 delta = 2.5 - dist
-                obj.acceleration += n * delta * 1000
+                obj.acceleration += n * delta * 2000
 
             # Update the positions of all the balls
             self.solver.update()
@@ -175,7 +176,7 @@ class Window:
                 draw_mesh(self.shader, self.cyl_mesh, self.modelMatrixLocation, center,
                           rotation_matrix=rotation_matrix, scale=0.15)
 
-            # Display the loaded buffer
+            # Display the next buffer
             pg.display.flip()
 
             # Timing
@@ -188,32 +189,41 @@ class Window:
     def handle_keyboard(self):
         keys = pg.key.get_pressed()
 
-        speed = 0.05
-        if keys[pg.K_w]:
-            self.camera.position += self.camera.forwards * speed
-        if keys[pg.K_a]:
-            self.camera.position -= self.camera.right * speed
-        if keys[pg.K_s]:
-            self.camera.position -= self.camera.forwards * speed
-        if keys[pg.K_d]:
-            self.camera.position += self.camera.right * speed
-        if keys[pg.K_q]:
-            self.camera.position += self.camera.up * speed
-        if keys[pg.K_e]:
-            self.camera.position -= self.camera.up * speed
+        if keys[pg.K_g]:
+            self.solver.expanding_force(np.array([0, -4, 0]), 5000)
+
+        # Camera
+        if not self.fix_camera:
+            speed = 0.05
+            if keys[pg.K_w]:
+                self.camera.position += self.camera.forwards * speed
+            if keys[pg.K_a]:
+                self.camera.position -= self.camera.right * speed
+            if keys[pg.K_s]:
+                self.camera.position -= self.camera.forwards * speed
+            if keys[pg.K_d]:
+                self.camera.position += self.camera.right * speed
+            if keys[pg.K_q]:
+                self.camera.position += self.camera.up * speed
+            if keys[pg.K_e]:
+                self.camera.position -= self.camera.up * speed
+
 
     def handle_mouse(self):
-        (dx, dy) = pg.mouse.get_rel()
-        dx *= 0.1
-        dy *= 0.1
-        self.camera.yaw += dx
-        self.camera.pitch -= dy
-        if self.camera.pitch > 89:
-            self.camera.pitch = 89
-        if self.camera.pitch < -89:
-            self.camera.pitch = -89
-        pg.mouse.set_pos(Window.WIDTH / 2, Window.HEIGHT / 2)
-        pg.mouse.set_visible(False)
+
+        # Camera
+        if not self.fix_camera:
+            (dx, dy) = pg.mouse.get_rel()
+            dx *= 0.1
+            dy *= 0.1
+            self.camera.yaw += dx
+            self.camera.pitch -= dy
+            if self.camera.pitch > 89:
+                self.camera.pitch = 89
+            if self.camera.pitch < -89:
+                self.camera.pitch = -89
+            pg.mouse.set_pos(Window.WIDTH / 2, Window.HEIGHT / 2)
+            pg.mouse.set_visible(False)
 
     def quit(self):
         self.sphere_mesh.destroy()

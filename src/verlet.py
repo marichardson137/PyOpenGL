@@ -31,7 +31,7 @@ class Solver:
     sub_steps = 1
 
     gravity = np.array([0.0, -1000, 0.0])
-    friction = -40
+    friction = -100
 
     grid_size = 10
 
@@ -46,9 +46,9 @@ class Solver:
         sub_dt = Solver.time_step / Solver.sub_steps
         for step in range(Solver.sub_steps):
             self.apply_forces()
-            # self.update_grid()
-            # self.evaluate_grid()
-            self.brute_collisions()
+            self.update_grid()
+            self.evaluate_grid()
+            # self.brute_collisions()
             self.apply_constraints()
             self.update_positions(sub_dt)
             self.update_links()
@@ -157,3 +157,11 @@ class Solver:
     def add_link(self, target, obj_a, obj_b):
         link = Link(obj_a, obj_b, target)
         self.links.append(link)
+
+    def expanding_force(self, center, strength):
+        for obj in self.verlet_objects:
+            disp = obj.pos_curr - center
+            dist = np.sqrt(disp.dot(disp))
+            if dist > 0:
+                n = disp / dist
+                obj.acceleration += n * strength

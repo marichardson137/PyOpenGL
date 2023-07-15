@@ -25,16 +25,16 @@ class Link:
         if dist != 0:
             n = disp / dist
             delta = self.target - dist
-            # self.a.pos_curr += 0.5 * delta * n
-            # self.b.pos_curr -= 0.5 * delta * n
+            self.a.pos_curr += 0.5 * delta * n
+            self.b.pos_curr -= 0.5 * delta * n
 
 
 class Solver:
     time_step = 0.0015
     sub_steps = 1
 
-    gravity = np.array([0.0, 0, 0.0])
-    # gravity = np.array([0.0, -1000, 0.0])  # -1000
+    # gravity = np.array([0.0, 0, 0.0])
+    gravity = np.array([0.0, -1000, 0.0])  # -1000
 
     friction = -100
 

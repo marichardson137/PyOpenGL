@@ -14,7 +14,7 @@ from src.verlet import VerletObject, Solver
 
 
 def distance(point1, point2):
-    distance = np.sqrt((point2[0] - point1[0])**2 + (point2[1] - point1[1])**2 + (point2[2] - point1[2])**2)
+    distance = np.sqrt((point2[0] - point1[0]) ** 2 + (point2[1] - point1[1]) ** 2 + (point2[2] - point1[2]) ** 2)
     return distance
 
 
@@ -103,6 +103,8 @@ class Window:
         ico_recursion = 1
         ico_positions = create_icosphere(ico_radius, ico_recursion)
 
+        ico_positions = list(set(ico_positions))
+
         # Build the Icosphere
         ico_vs = []
         for pos in ico_positions:
@@ -115,17 +117,10 @@ class Window:
             distances = [(j, distance(pos, ico_positions[j])) for j in range(len(ico_positions))]
             distances.sort(key=lambda x: x[1])
 
-            # Find the closest point
-            c = 1
-            while c < len(ico_positions):
-                if distances[c] != 0:
-                    break
-                c += 1
-
             # Connect to the set of nearest neighbors
-            dist = distances[c][1]
+            dist = distances[1][1]
             for j in range(1, 7):
-                if distances[j][1] - dist < 0.00001:
+                if distances[j][1] - dist < 0.1:
                     neighbor_index = distances[j][0]
                     self.solver.add_link(distances[j][1], ico_vs[i], ico_vs[neighbor_index])
 
@@ -183,7 +178,7 @@ class Window:
                 dist = np.sqrt(disp.dot(disp))
                 n = disp / dist
                 delta = ico_radius - dist
-                obj.acceleration += n * delta * 0
+                obj.acceleration += n * delta * 100000
 
             # Update the positions of all the balls
             self.solver.update()
@@ -197,7 +192,6 @@ class Window:
                 disp = link.a.pos_curr - link.b.pos_curr
                 dist = np.sqrt(disp.dot(disp))
                 if dist != 0:
-
                     n = disp / dist
                     center = link.b.pos_curr + n * 0.5 * dist
 
@@ -247,7 +241,6 @@ class Window:
                 self.camera.position += self.camera.up * speed
             if keys[pg.K_e]:
                 self.camera.position -= self.camera.up * speed
-
 
     def handle_mouse(self):
 

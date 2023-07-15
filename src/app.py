@@ -120,7 +120,7 @@ class Window:
             # Connect to the set of nearest neighbors
             dist = distances[1][1]
             for j in range(1, 7):
-                if distances[j][1] - dist < 0.1:
+                if distances[j][1] - dist < 0.3:
                     neighbor_index = distances[j][0]
                     self.solver.add_link(distances[j][1], ico_vs[i], ico_vs[neighbor_index])
 
@@ -178,7 +178,7 @@ class Window:
                 dist = np.sqrt(disp.dot(disp))
                 n = disp / dist
                 delta = ico_radius - dist
-                obj.acceleration += n * delta * 100000
+                obj.acceleration += n * delta * 0
 
             # Update the positions of all the balls
             self.solver.update()
@@ -224,7 +224,7 @@ class Window:
         if keys[pg.K_g]:
             # self.solver.expanding_force(np.array([0, -4, 0]), 8000)
             # self.solver.expanding_force(np.array([0, 4, 0]), 8000)
-            self.solver.expanding_force(np.array([0, 2, 0]), -2500)
+            self.solver.expanding_force(np.array([0, 2, 0]), -4000)
 
         # Camera
         if not self.fix_camera:

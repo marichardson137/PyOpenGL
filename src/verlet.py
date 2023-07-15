@@ -9,6 +9,7 @@ class VerletObject:
         self.acceleration = np.zeros(3)
         self.radius = radius
 
+
 class Link:
 
     def __init__(self, obj_1, obj_2, target):
@@ -30,7 +31,7 @@ class Solver:
     sub_steps = 1
 
     gravity = np.array([0.0, -1000, 0.0])
-    damping = 0.8
+    friction = -40
 
     grid_size = 10
 
@@ -75,7 +76,11 @@ class Solver:
     def apply_forces(self):
         for obj in self.verlet_objects:
             obj.acceleration += Solver.gravity
-
+            disp = obj.pos_curr - obj.pos_old
+            dist = np.sqrt(disp.dot(disp))
+            if dist > 0:
+                n = disp / dist
+                obj.acceleration += n * Solver.friction
 
     def evaluate_grid(self):
         for x in range(1, Solver.grid_size - 1):

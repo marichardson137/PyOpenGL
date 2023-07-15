@@ -68,7 +68,7 @@ class Window:
         self.camera_speed = 8
         self.camera = Camera(position=(0, 3, self.camera_radius))
         self.camera.pitch = -14
-        self.fix_camera = True
+        self.fix_camera = False
 
         self.setup_shader()
         self.run()
@@ -78,12 +78,12 @@ class Window:
         self.num_frames = 0
         self.global_time = time.time()
 
-        circ_num = 36
+        circ_num = 0
         r = 2.5
 
         # Add links
         ps = [
-            (r * np.sin(2 * np.pi / i), 0, r * np.cos(2 * np.pi / i)) for i in range(1, circ_num + 1)
+            (r * np.sin(2 * np.pi / i), -1, r * np.cos(2 * np.pi / i)) for i in range(1, circ_num + 1)
         ]
         vs = []
         for p in ps:
@@ -128,7 +128,7 @@ class Window:
                       self.container.position, scale=self.container.scale, method=GL_POINTS)
 
             # Add balls to the simulation
-            if self.num_frames >= 20 and self.num_balls < 20:
+            if self.num_frames >= 60 and self.num_balls < 50:
                 x = np.cos(np.deg2rad(360 * np.random.rand()))
                 y = np.sin(np.deg2rad(360 * np.random.rand()))
                 self.solver.add_object(VerletObject(position=(x * 2.5, 0, y * 2.5), radius=0.1))
@@ -260,10 +260,10 @@ class Window:
         keys = pg.key.get_pressed()
         if keys[pg.K_w]:
             self.camera_radius -= 0.08
-            self.camera.pitch -= 0.3
+            self.camera.pitch -= 0.4
         if keys[pg.K_s]:
             self.camera_radius += 0.08
-            self.camera.pitch += 0.3
+            self.camera.pitch += 0.4
 
         x = np.cos(np.deg2rad(self.global_time * self.camera_speed))
         z = np.sin(np.deg2rad(self.global_time * self.camera_speed))

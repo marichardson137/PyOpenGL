@@ -190,7 +190,12 @@ class Window:
         keys = pg.key.get_pressed()
 
         if keys[pg.K_g]:
-            self.solver.expanding_force(np.array([0, -4, 0]), 5000)
+            # self.solver.expanding_force(np.array([0, -4, 0]), 8000)
+            # self.solver.expanding_force(np.array([0, 4, 0]), 8000)
+            self.solver.expanding_force(np.array([0, 2, 0]), -3000)
+            self.solver.expanding_force(np.array([0, -2, 0]), -3000)
+
+
 
         # Camera
         if not self.fix_camera:

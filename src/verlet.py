@@ -30,7 +30,7 @@ class Solver:
     time_step = 0.0015
     sub_steps = 1
 
-    gravity = np.array([0.0, -1000, 0.0])
+    gravity = np.array([0.0, 0, 0.0]) # -1000
     friction = -100
 
     grid_size = 10

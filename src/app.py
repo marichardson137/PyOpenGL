@@ -92,14 +92,14 @@ class Window:
         ]
         vs = []
         for p in ps:
-            v = VerletObject(position=p, radius=0.1)
+            v = VerletObject(position=p, radius=0.15)
             self.solver.add_object(v)
             vs.append(v)
         for i in range(-1, len(vs) - 1):
             self.solver.add_link(2 * r * np.sin(np.pi / circ_num / 2), vs[i], vs[i + 1])
 
         # Generate Icosphere
-        ico_radius = 2
+        ico_radius = 1
         ico_recursion = 1
         ico_positions = create_icosphere(ico_radius, ico_recursion)
 
@@ -108,7 +108,7 @@ class Window:
         # Build the Icosphere
         ico_vs = []
         for pos in ico_positions:
-            v = VerletObject(position=pos, radius=0.2)
+            v = VerletObject(position=pos, radius=0.1)
             self.solver.add_object(v)
             ico_vs.append(v)
 
@@ -178,7 +178,7 @@ class Window:
                 dist = np.sqrt(disp.dot(disp))
                 n = disp / dist
                 delta = ico_radius - dist
-                obj.acceleration += n * delta * 0
+                obj.acceleration += n * delta * 100000
 
             # Update the positions of all the balls
             self.solver.update()
@@ -191,22 +191,21 @@ class Window:
             for link in self.solver.links:
                 disp = link.a.pos_curr - link.b.pos_curr
                 dist = np.sqrt(disp.dot(disp))
-                if dist != 0:
-                    n = disp / dist
-                    center = link.b.pos_curr + n * 0.5 * dist
+                n = disp / dist
+                center = link.b.pos_curr + n * 0.5 * dist
 
-                    direction_vector = n / np.linalg.norm(n)
-                    up_vector = Window.GLOBAL_Y
+                direction_vector = n / np.linalg.norm(n)
+                up_vector = Window.GLOBAL_Y
 
-                    right_vector = np.cross(up_vector, direction_vector)
-                    right_vector /= np.linalg.norm(right_vector)
-                    new_up_vector = np.cross(right_vector, direction_vector)
-                    new_up_vector /= np.linalg.norm(new_up_vector)
+                right_vector = np.cross(up_vector, direction_vector)
+                right_vector /= np.linalg.norm(right_vector)
+                new_up_vector = np.cross(right_vector, direction_vector)
+                new_up_vector /= np.linalg.norm(new_up_vector)
 
-                    rotation_matrix = np.array([right_vector, new_up_vector, -direction_vector], dtype=np.float32)
+                rotation_matrix = np.array([right_vector, new_up_vector, -direction_vector], dtype=np.float32)
 
-                    draw_mesh(self.shader, self.cyl_mesh, self.modelMatrixLocation, center,
-                              rotation_matrix=rotation_matrix, scale=0.4)
+                draw_mesh(self.shader, self.cyl_mesh, self.modelMatrixLocation, center,
+                          rotation_matrix=rotation_matrix, scale=0.25)
 
             # Display the next buffer
             pg.display.flip()

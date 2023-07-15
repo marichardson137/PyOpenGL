@@ -115,10 +115,19 @@ class Window:
             distances = [(j, distance(pos, ico_positions[j])) for j in range(len(ico_positions))]
             distances.sort(key=lambda x: x[1])
 
-            # Connect to the six nearest neighbors
+            # Find the closest point
+            c = 1
+            while c < len(ico_positions):
+                if distances[c] != 0:
+                    break
+                c += 1
+
+            # Connect to the set of nearest neighbors
+            dist = distances[c][1]
             for j in range(1, 7):
-                neighbor_index = distances[j][0]
-                self.solver.add_link(distances[j][1], ico_vs[i], ico_vs[neighbor_index])
+                if distances[j][1] - dist < 0.00001:
+                    neighbor_index = distances[j][0]
+                    self.solver.add_link(distances[j][1], ico_vs[i], ico_vs[neighbor_index])
 
         running = True
         while running:

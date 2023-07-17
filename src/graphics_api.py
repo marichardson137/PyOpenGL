@@ -36,11 +36,9 @@ def draw_mesh(shader, mesh, model_location, position, rotation=(0, 0, 0), rotati
         )
     )
     shader.use()
-
     glUniformMatrix4fv(model_location, 1, GL_FALSE, model)
     glBindVertexArray(mesh.vao)
     glDrawArrays(method, 0, mesh.vertex_count)
-
     shader.detach()
     glBindVertexArray(0)
 

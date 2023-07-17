@@ -83,47 +83,24 @@ class Window:
         self.num_frames = 0
         self.global_time = time.time()
 
-        circ_num = 0
-        r = 2.5
-
-        # Add links
-        ps = [
-            (r * np.sin(2 * np.pi / i), -1, r * np.cos(2 * np.pi / i)) for i in range(1, circ_num + 1)
-        ]
+        # Build the net
         vs = []
-        for p in ps:
-            v = VerletObject(position=p, radius=0.15)
-            self.solver.add_object(v)
-            vs.append(v)
-        for i in range(-1, len(vs) - 1):
-            self.solver.add_link(2 * r * np.sin(np.pi / circ_num / 2), vs[i], vs[i + 1])
-
-        # Generate Icosphere
-        ico_radius = 0.5
-        ico_recursion = 0
-        ico_positions = create_icosphere(ico_radius, ico_recursion)
-
-        ico_positions = list(set(ico_positions))
-
-        for s in range(-3, 4, 2):
-            # Build the Icosphere
-            ico_vs = []
-            for pos in ico_positions:
-                v = VerletObject(position=(pos[0] + s, pos[1], pos[2] + s), radius=0.25)
+        for x in range(-2, 3):
+            for y in range(-2, 3):
+                v = VerletObject(position=(x, 0, y), radius=0.2)
+                vs.append(v)
                 self.solver.add_object(v)
-                ico_vs.append(v)
 
-            for i, pos in enumerate(ico_positions):
-                # Calculate distances to all other vertices and sort them
-                distances = [(j, distance(pos, ico_positions[j])) for j in range(len(ico_positions))]
-                distances.sort(key=lambda x: x[1])
+        for v in vs:
+            distances = [(distance(v.pos_curr, neighbor.pos_curr), neighbor) for neighbor in vs if
+                         neighbor != v]
+            distances.sort(key=lambda x : x[0])  # Sort by distance (closest to farthest)
+            n = 0
+            nearest = distances[n][0]
+            while distances[n][0] == nearest:
+                self.solver.add_link(4/5, v, distances[n][1])
+                n += 1
 
-                # Connect to the set of nearest neighbors
-                dist = distances[1][1]
-                for j in range(1, 7):
-                    if distances[j][1] - dist < 0.3:
-                        neighbor_index = distances[j][0]
-                        self.solver.add_link(distances[j][1], ico_vs[i], ico_vs[neighbor_index])
 
         running = True
         while running:
@@ -169,17 +146,6 @@ class Window:
                 self.num_balls += 1
                 self.num_frames = 0
 
-            # Update our pressure icosphere
-            # center = np.zeros(3, dtype=np.float32)
-            # for obj in ico_vs:
-            #     center += obj.pos_curr
-            # center /= len(ico_positions)
-            # for obj in ico_vs:
-            #     disp = obj.pos_curr - center
-            #     dist = np.sqrt(disp.dot(disp))
-            #     n = disp / dist
-            #     delta = ico_radius - dist
-            #     obj.acceleration += n * delta * 100000
 
             # Update the positions of all the balls
             self.solver.update()

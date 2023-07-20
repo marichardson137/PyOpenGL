@@ -5,11 +5,12 @@ import numpy as np
 
 class VerletObject:
 
-    def __init__(self, position=(0.0, 0.0, 0.0), radius=1):
+    def __init__(self, position=(0.0, 0.0, 0.0), radius=1, tag=0):
         self.pos_curr = np.array(position, dtype=np.float64)
         self.pos_old = np.array(position, dtype=np.float64)
         self.acceleration = np.zeros(3)
         self.radius = radius
+        self.tag = tag  # 0=Free | 1=Rigid
 
 
 class Link:
@@ -25,8 +26,15 @@ class Link:
         if dist != 0:
             n = disp / dist
             delta = self.target - dist
-            self.a.pos_curr += 0.5 * delta * n
-            self.b.pos_curr -= 0.5 * delta * n
+            percent = 0.5
+            if self.a.tag == 1:
+                percent = 0
+            elif self.b.tag == 1:
+                percent = 1
+            if self.b.tag == 1 and self.a.tag == 1:
+                return
+            self.a.pos_curr += percent * delta * n
+            self.b.pos_curr -= (1 - percent) * delta * n
 
 
 class Solver:
@@ -73,9 +81,10 @@ class Solver:
 
     def update_positions(self, dt):
         for obj in self.verlet_objects:
-            displacement = obj.pos_curr - obj.pos_old
-            obj.pos_old = obj.pos_curr
-            obj.pos_curr = obj.pos_curr + displacement + obj.acceleration * dt * dt
+            if obj.tag != 1:
+                displacement = obj.pos_curr - obj.pos_old
+                obj.pos_old = obj.pos_curr
+                obj.pos_curr = obj.pos_curr + displacement + obj.acceleration * dt * dt
             obj.acceleration = np.zeros(3, dtype=np.float64)
 
     def apply_forces(self):

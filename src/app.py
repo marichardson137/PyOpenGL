@@ -85,9 +85,12 @@ class Window:
 
         # Build the net
         vs = []
-        for x in range(-2, 3):
-            for y in range(-2, 3):
-                v = VerletObject(position=(x, 0, y), radius=0.2)
+        for x in range(-3, 4):
+            for y in range(-3, 4):
+                tag = 0
+                if abs(x) == 3 and abs(y) == 3:
+                    tag = 1
+                v = VerletObject(position=(x, 0, y), radius=0.2, tag=tag)
                 vs.append(v)
                 self.solver.add_object(v)
 
@@ -172,7 +175,7 @@ class Window:
                 rotation_matrix = np.array([right_vector, new_up_vector, -direction_vector], dtype=np.float32)
 
                 draw_mesh(self.shader, self.cyl_mesh, self.modelMatrixLocation, center,
-                          rotation_matrix=rotation_matrix, scale=0.25)
+                          rotation_matrix=rotation_matrix, scale=0.3)
 
             # Display the next buffer
             pg.display.flip()

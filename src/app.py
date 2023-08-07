@@ -83,27 +83,26 @@ class Window:
         self.num_frames = 0
         self.global_time = time.time()
 
-        # Build the net
-        vs = []
-        for x in range(-3, 4):
-            for y in range(-3, 4):
-                tag = 0
-                if abs(x) == 3 and abs(y) == 3:
-                    tag = 1
-                v = VerletObject(position=(x, 0, y), radius=0.2, tag=tag)
-                vs.append(v)
-                self.solver.add_object(v)
-
-        for v in vs:
-            distances = [(distance(v.pos_curr, neighbor.pos_curr), neighbor) for neighbor in vs if
-                         neighbor != v]
-            distances.sort(key=lambda x : x[0])  # Sort by distance (closest to farthest)
-            n = 0
-            nearest = distances[n][0]
-            while distances[n][0] == nearest:
-                self.solver.add_link(4/5, v, distances[n][1])
-                n += 1
-
+        # # Build the net
+        # vs = []
+        # for x in range(-5, 6):
+        #     for y in range(-5, 6):
+        #         tag = 0
+        #         if abs(x) == 5 and abs(y) == 5:
+        #             tag = 1
+        #         v = VerletObject(position=(x / 2, 0, y / 2), radius=0.15, tag=tag)
+        #         vs.append(v)
+        #         self.solver.add_object(v)
+        #
+        # for v in vs:
+        #     distances = [(distance(v.pos_curr, neighbor.pos_curr), neighbor) for neighbor in vs if
+        #                  neighbor != v]
+        #     distances.sort(key=lambda x : x[0])  # Sort by distance (closest to farthest)
+        #     n = 0
+        #     nearest = distances[n][0]
+        #     while distances[n][0] == nearest:
+        #         self.solver.add_link(0.5, v, distances[n][1])
+        #         n += 1
 
         running = True
         while running:
@@ -141,14 +140,13 @@ class Window:
                       self.container.position, scale=self.container.scale, method=GL_POINTS)
 
             # Add balls to the simulation
-            if self.num_frames >= 0 and self.num_balls < 0:
+            if self.num_frames >= 1 and self.num_balls < 350:
                 x = np.cos(np.deg2rad(360 * np.random.rand()))
                 y = np.sin(np.deg2rad(360 * np.random.rand()))
-                self.solver.add_object(VerletObject(position=(x * 2.5, 0, y * 2.5), radius=0.1))
+                self.solver.add_object(VerletObject(position=(x * 2, 3, y * 2), radius=0.2))
 
                 self.num_balls += 1
                 self.num_frames = 0
-
 
             # Update the positions of all the balls
             self.solver.update()

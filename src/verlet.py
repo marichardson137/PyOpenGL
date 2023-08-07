@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+from scipy.spatial import KDTree
 
 
 class VerletObject:
@@ -51,33 +52,18 @@ class Solver:
     def __init__(self, container, verlet_objects=[]):
         self.container = container
         self.verlet_objects = verlet_objects
-        self.grid = np.empty((Solver.grid_size, Solver.grid_size, Solver.grid_size), dtype=object)
-        self.grid.fill([])
         self.links = []
 
     def update(self):
         sub_dt = Solver.time_step / Solver.sub_steps
         for step in range(Solver.sub_steps):
             self.apply_forces()
-            # self.update_grid()
-            # self.evaluate_grid()
-            self.brute_collisions()
+            # self.brute_collisions()
+            if self.verlet_objects:
+                self.kd_collisions()
             self.apply_constraints()
             self.update_positions(sub_dt)
             self.update_links()
-
-    def update_grid(self):
-        for x in range(Solver.grid_size):
-            for y in range(Solver.grid_size):
-                for z in range(Solver.grid_size):
-                    self.grid[x][y][z] = []
-
-        ran = 10
-        for obj in self.verlet_objects:
-            grid_x = int((obj.pos_curr[0] + ran / 2) / ran * Solver.grid_size)
-            grid_y = int((obj.pos_curr[1] + ran / 2) / ran * Solver.grid_size)
-            grid_z = int((obj.pos_curr[2] + ran / 2) / ran * Solver.grid_size)
-            self.grid[grid_x][grid_y][grid_z].append(obj)
 
     def update_positions(self, dt):
         for obj in self.verlet_objects:
@@ -96,23 +82,6 @@ class Solver:
                 n = disp / dist
                 obj.acceleration += n * Solver.friction
 
-    def evaluate_grid(self):
-        for x in range(1, Solver.grid_size - 1):
-            for y in range(1, Solver.grid_size - 1):
-                for z in range(1, Solver.grid_size - 1):
-                    curr_cell = self.grid[x][y][z]
-                    for dx in range(-1, 2):
-                        for dy in range(-1, 2):
-                            for dz in range(-1, 2):
-                                other_cell = self.grid[x + dx][y + dy][z + dz]
-                                self.check_cell_collisions(curr_cell, other_cell)
-
-    def check_cell_collisions(self, c1, c2):
-        for a in c1:
-            for b in c2:
-                if a is not b:
-                    self.handle_collision(a, b)
-
     def handle_collision(self, a, b):
         axis = a.pos_curr - b.pos_curr
         dist = np.sqrt(axis.dot(axis))
@@ -128,6 +97,13 @@ class Solver:
         for a in self.verlet_objects:
             for b in self.verlet_objects:
                 self.handle_collision(a, b)
+
+    def kd_collisions(self):
+        data = [obj.pos_curr for obj in self.verlet_objects]
+        kd = KDTree(data)
+        pairs = kd.query_pairs(r=0.4)
+        for (i, j) in pairs:
+            self.handle_collision(self.verlet_objects[i], self.verlet_objects[j])
 
     def apply_constraints(self):
         # Floor
@@ -184,3 +160,5 @@ class Solver:
             if dist > 0:
                 n = disp / dist
                 obj.acceleration += n * strength
+
+

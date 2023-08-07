@@ -83,17 +83,17 @@ class Window:
         self.num_frames = 0
         self.global_time = time.time()
 
-        # Build the net
+        # # Build the net
         # vs = []
-        # for x in range(-4, 5):
-        #     for y in range(-4, 5):
+        # for x in range(-5, 6):
+        #     for y in range(-5, 6):
         #         tag = 0
-        #         if abs(x) == 4 and abs(y) == 4:
+        #         if abs(x) == 5 and abs(y) == 5:
         #             tag = 1
         #         v = VerletObject(position=(x / 2, 0, y / 2), radius=0.15, tag=tag)
         #         vs.append(v)
         #         self.solver.add_object(v)
-
+        #
         # for v in vs:
         #     distances = [(distance(v.pos_curr, neighbor.pos_curr), neighbor) for neighbor in vs if
         #                  neighbor != v]
@@ -140,10 +140,10 @@ class Window:
                       self.container.position, scale=self.container.scale, method=GL_POINTS)
 
             # Add balls to the simulation
-            if self.num_frames >= 1 and self.num_balls < 300:
+            if self.num_frames >= 1 and self.num_balls < 350:
                 x = np.cos(np.deg2rad(360 * np.random.rand()))
                 y = np.sin(np.deg2rad(360 * np.random.rand()))
-                self.solver.add_object(VerletObject(position=(x * 2, 2, y * 2), radius=0.2))
+                self.solver.add_object(VerletObject(position=(x * 2, 3, y * 2), radius=0.2))
 
                 self.num_balls += 1
                 self.num_frames = 0
